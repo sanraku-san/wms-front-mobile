@@ -73,7 +73,7 @@ const Index = () => {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.Box}>Login</Text>
+            <Text style={styles.Box}>Log ako</Text>
           )}
         </TouchableOpacity>
       </View>
