@@ -25,6 +25,7 @@ export const theme = {
     card: {
       backgroundColor: "#d6deeb",
       color: "#000000",
+      color2: "#fff",
       borderColor:"#fff"
     },
     search: {
@@ -80,6 +81,7 @@ export const theme = {
     card: {
       backgroundColor: "#131a27",
       color: "red",
+      color2: "#fff",
       borderColor:"#fff"
     },
     search: {
