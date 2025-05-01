@@ -44,7 +44,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="warehouse"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.home.focus : theme.home.nonfocus}
               />
             ),
           }}
@@ -70,7 +70,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="inventory"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.inventory.focus : theme.inventory.nonfocus}
               />
             ),
           }}
@@ -96,7 +96,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="playlist-add-check"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.transaction.focus : theme.transaction.nonfocus}
               />
             ),
           }}
@@ -122,7 +122,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="history"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.transactionhistory.focus : theme.transactionhistory.nonfocus}
               />
             ),
           }}
@@ -148,7 +148,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="home-work"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.store.focus : theme.store.nonfocus}
               />
             ),
           }}
@@ -174,7 +174,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="manage-accounts"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.account.focus : theme.account.nonfocus}
               />
             ),
           }}
@@ -200,7 +200,7 @@ const DrawerLayout = () => {
               <MaterialIcons
                 name="settings"
                 size={size}
-                color={focused ? theme.color : "#b2b2b2"}
+                color={focused ? theme.settings.focus: theme.settings.nonfocus}
               />
             ),
           }}

@@ -5,18 +5,49 @@ export const theme = {
     color: "#26354e",
     secondColor: "#677183",
     background: "#c4d0e3",
-    pageBackground: "##bdc2c9",
+    pageBackground: "#bdc2c9",
+    indexpageBackground: "#bdc2c9",
     imageBackground: "#c4d0e3",
-    fabBackground: "#c4d0e3",
+    fabBackground: "#66BB6A",
     fabIcon: "#26354e",
+    inventory: {
+      focus: "#FFA726", 
+      nonfocus: "#8D6E63", 
+    },
+    home: {
+      focus: "#5C6BC0", 
+      nonfocus: "#3F4A79", 
+    },
+    settings: {
+      focus: "#29B6F6", 
+      nonfocus: "#1E88E5",
+    },
+    store: {
+      focus: "#9C27B0", 
+      nonfocus: "#7B1FA2", 
+    },
+    account: {
+      focus: "#EF5350", 
+      nonfocus: "#C62828",
+    },
+    transaction: {
+      focus: "#66BB6A", 
+      nonfocus: "#388E3C",
+    },
+    transactionhistory: {
+      focus: "#26A69A",
+      nonfocus: "#00897B",
+    },
     button: {
-      buttonText:"#26354e",
+      buttonText: "#26354e",
       backgroundColor: "#c4d0e3",
       color: "#26354e",
       transaction: "red",
       profileIcon: "#929aa6",
       profileButtonBg: "#26354e",
       profileText: "#26354e",
+      edit: "#15d52d",
+      delete: "#e50000",
     },
     header: {
       backgroundColor: "#c4d0e3",
@@ -25,8 +56,7 @@ export const theme = {
     card: {
       backgroundColor: "#d6deeb",
       color: "#000000",
-      color2: "#fff",
-      borderColor:"#fff"
+      borderColor: "#fff",
     },
     search: {
       backgroundColor: "#d6deeb",
@@ -62,17 +92,48 @@ export const theme = {
     secondColor: "#b3b8c1",
     background: "#131a27",
     pageBackground: "#2a303c",
+    indexpageBackground: "#2a303c",
     imageBackground: "#161f2e",
-    fabBackground: "#161f2e",
-    fabIcon:"#fcfcfc",
+    fabBackground: "#66BB6A",
+    fabIcon: "#fcfcfc",
+    inventory: {
+      focus: "#FFA726",
+      nonfocus: "#8D6E63",
+    },
+    home: {
+      focus: "#5C6BC0",
+      nonfocus: "#7986CB", 
+    },
+    settings: {
+      focus: "#29B6F6",
+      nonfocus: "#4FC3F7", 
+    },
+    store: {
+      focus: "#AB47BC",
+      nonfocus: "#BA68C8", 
+    },
+    account: {
+      focus: "#EF5350",
+      nonfocus: "#E57373", 
+    },
+    transaction: {
+      focus: "#66BB6A",
+      nonfocus: "#81C784", 
+    },
+    transactionhistory: {
+      focus: "#26A69A",
+      nonfocus: "#4DB6AC", 
+    },
     button: {
-      buttonText:"#131a27",
+      buttonText: "#131a27",
       backgroundColor: "#161f2e",
       color: "#e7e8e9",
       transaction: "#272e50",
       profileIcon: "#fcfcfc",
       profileButtonBg: "#131a27",
       profileText: "#fcfcfc",
+      edit: "#15d52d",
+      delete: "#e50000",
     },
     header: {
       backgroundColor: "#131a27",
@@ -81,8 +142,7 @@ export const theme = {
     card: {
       backgroundColor: "#131a27",
       color: "red",
-      color2: "#fff",
-      borderColor:"#fff"
+      borderColor: "#fff",
     },
     search: {
       backgroundColor: "#131a27",
