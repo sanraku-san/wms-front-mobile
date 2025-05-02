@@ -14,19 +14,9 @@ import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { Barcode } from "expo-barcode-generator";
 import { getProductById } from "../api/products";
-
-// const categories = [
-//   { label: "Food", value: 1 },
-//   { label: "Clothing", value: 2 },
-//   { label: "Electronics", value: 3 },
-//   { label: "Furniture", value: 4 },
-//   { label: "Toys", value: 5 },
-// ];
-
 import { themeContext } from "../theme/themeContext";
 
 function ProductView() {
-  // const [productdata, setProductData] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const { id } = useLocalSearchParams();
   const [productData, setProductData] = useState({
@@ -197,7 +187,11 @@ function ProductView() {
             {productData.name}
           </Text>
           <View
-            style={{ flexDirection: "row", gap: 200, alignItems: "center" }}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
           >
             <View style={{ flexDirection: "column", gap: 10 }}>
               <Text style={{ color: theme.color }}>Category</Text>

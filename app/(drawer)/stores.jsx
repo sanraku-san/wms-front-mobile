@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import React, { useCallback, useState, useContext } from "react";
+import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useFocusEffect, router } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
@@ -26,14 +26,17 @@ const forFilter = [
 ];
 
 const forSortBy = [
-  { label: "Name", value: 1 },
-  { label: "Address", value: 2 },
+  { label: "Name (A-Z)", value: 1 },
+  { label: "Name (Z-A)", value: 2 },
+  { label: "Address (A-Z)", value: 3 },
+  { label: "Address (Z-A)", value: 4 },
 ];
 
 function Stores() {
   const [storesdata, setStoresData] = useState([]);
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
+  const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
 
@@ -82,6 +85,32 @@ function Stores() {
       refreshData();
     }, [])
   );
+
+
+    useEffect(() => {
+      let forSort = [...storesdata];
+  
+      if (sortBy) {
+        switch (sortBy) {
+          case 1: //name asc
+            forSort.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          case 2: //name desc
+            forSort.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+          case 3: //address asc
+            forSort.sort((a, b) => a.address.localeCompare(b.address));
+            break;
+          case 4: //address desc
+            forSort.sort((a, b) => b.address.localeCompare(a.address));
+            break;
+          default:
+            break;
+        }
+      }
+  
+      setSortedBy(forSort)
+    },[storesdata, sortBy]);
 
   const renderDropdown = (item) => {
     return (
@@ -176,7 +205,7 @@ function Stores() {
             </View>
           </View>
         )}
-        data={storesdata}
+        data={sortedBy.length > 0 ? sortedBy : storesdata}
         refreshControl={
           <RefreshControl refreshing={refresh} onRefresh={refreshData} />
         }

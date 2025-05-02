@@ -5,10 +5,10 @@ import {
   RefreshControl,
   StyleSheet,
   Alert,
-  TouchableOpacity,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
-import React, { useCallback, useState, useContext } from "react";
+import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useFocusEffect, router } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
@@ -19,6 +19,7 @@ import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { themeContext } from "../theme/themeContext";
 
+// not working pa ang filter and search
 const forFilter = [
   { label: "All Accounts", value: 1 },
   { label: "Manager", value: 2 },
@@ -26,20 +27,24 @@ const forFilter = [
 ];
 
 const forSortBy = [
-  { label: "Name", value: 1 },
-  { label: "Role", value: 2 },
+  { label: "First Name (A-Z)", value: 1 },
+  { label: "First Name (Z-A)", value: 2 },
+  { label: "Last Name (A-Z)", value: 3 },
+  { label: "Last Name (Z-A)", value: 4 },
 ];
 
 function Accounts() {
   const [userdata, setUserData] = useState([]);
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
+  const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
 
   const handleAdd = () => {
     router.push("/(create)/createAccount");
   };
+
   const handleDelete = (id) => {
     Alert.alert(
       "Confirm Delete",
@@ -68,6 +73,7 @@ function Accounts() {
       ]
     );
   };
+
   const refreshData = () => {
     getUser().then((res) => {
       setUserData(res.data);
@@ -79,6 +85,40 @@ function Accounts() {
       refreshData();
     }, [])
   );
+
+  useEffect(() => {
+    let forSort = [...userdata];
+
+    if (sortBy) {
+      switch (sortBy) {
+        case 1:
+          forSort.sort((a, b) =>
+            a.profile.first_name.localeCompare(b.profile.first_name)
+          );
+          break;
+        case 2:
+          forSort.sort((a, b) =>
+            b.profile.first_name.localeCompare(a.profile.first_name)
+          );
+          break;
+        case 3:
+          forSort.sort((a, b) =>
+            a.profile.last_name.localeCompare(b.profile.last_name)
+          );
+          break;
+        case 4:
+          forSort.sort((a, b) =>
+            b.profile.last_name.localeCompare(a.profile.last_name)
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    setSortedBy(forSort);
+  },[userdata, sortBy]);
+
   const pushToEdit = (id) => {
     router.push({ pathname: "/(update)/editAccount", params: { id } });
   };
@@ -176,7 +216,7 @@ function Accounts() {
             </View>
           </View>
         )}
-        data={userdata}
+        data={sortedBy.length > 0 ? sortedBy : userdata}
         refreshControl={
           <RefreshControl refreshing={refresh} onRefresh={refreshData} />
         }
@@ -185,6 +225,7 @@ function Accounts() {
             onPress={() =>
               router.push({ pathname: "accountView", params: { id: item.id } })
             }
+            style={{width: "100%"}}
           >
             <View style={styles.main}>
               <View
@@ -198,29 +239,9 @@ function Accounts() {
                     <Text style={[styles.text, { color: theme.item.title }]}>
                       {item.profile?.first_name} {item.profile?.last_name}
                     </Text>
-
-                    {/* <Text
-                      style={[styles.type1, { fontSize: 10, paddingBottom: 2 }]}
-                    >
-                      {item.role}
-                    </Text>
-
-                    <Text
-                      style={[styles.type1, { color: theme.item.username }]}
-                    >
-                      Username: {item.username}
-                    </Text>
-                    <Text style={[styles.type1, { color: theme.item.email }]}>
-                      Email: {item.email}
-                    </Text>
-                    <Text
-                      style={[styles.type1, { color: theme.item.accContact }]}
-                    >
-                      Contact: {item.contact_number}
-                    </Text> */}
                   </View>
                 </View>
-                {/* <View style={{ alignItems: "center", marginTop: 30, gap: 10 }}>
+                <View style={{ alignItems: "center", gap: 10, flexDirection: "row" }}>
                   <TouchableOpacity
                     onPress={() => pushToEdit(item.id)}
                     style={[
@@ -229,7 +250,7 @@ function Accounts() {
                     ]}
                   >
                     <Icon3
-                      name="store-edit"
+                      name="account-edit"
                       size={20}
                       color={theme.button.color}
                       backgroundColor={theme.button.backgroundColor}
@@ -249,7 +270,7 @@ function Accounts() {
                       backgroundColor={theme.button.backgroundColor}
                     />
                   </TouchableOpacity>
-                </View> */}
+                </View>
               </View>
             </View>
           </Pressable>
@@ -277,8 +298,12 @@ function Accounts() {
 const styles = StyleSheet.create({
   main: {
     padding: 10,
+    alignItems: "center",
+    width: "100%",
+    justifyContent: "center"
   },
   card: {
+    width: "100%",
     flexDirection: "row",
     backgroundColor: "#Cbd5e1",
     borderRadius: 4,
@@ -290,11 +315,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     alignItems: "center", // Added for vertical alignment
-    justifyContent: "space-between", // Added for space between content and buttons
+    // justifyContent: "space-between", // Added for space between content and buttons
   },
   card2: {
     padding: 5,
     flex: 1, // Added to allow text to take up available space
+    justifyContent: "space-between",
   },
   text: {
     fontSize: 18,

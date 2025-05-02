@@ -9,7 +9,7 @@ import {
   Alert,
   Pressable,
 } from "react-native";
-import React, { useCallback, useState, useContext } from "react";
+import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useFocusEffect } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
@@ -30,16 +30,18 @@ const forFilter = [
 ];
 
 const forSortBy = [
-  { label: "Name", value: 1 },
-  { label: "Quantity", value: 2 },
-  { label: "Item Code", value: 3 },
-  { label: "Price", value: 4 },
+  { label: "Name (A-Z)", value: 1 },
+  { label: "Name (Z-A)", value: 2 },
+  { label: "Price (Low-High)", value: 3 },
+  { label: "Price (High-Low)", value: 4 },
+  { label: "Item Code", value: 5 },
 ];
 
 function Inventory() {
   const [productdata, setProductData] = useState([]);
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
+  const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
 
@@ -81,6 +83,36 @@ function Inventory() {
       refreshData();
     }, [])
   );
+
+
+  // pang sort dropdown function
+  useEffect(() => {
+    let forSort = [...productdata];
+
+    if (sortBy) {
+      switch (sortBy) {
+        case 1: //name asc
+          forSort.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 2: //name desc
+          forSort.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 3: //asc
+          forSort.sort((a, b) => a.price - b.price);
+          break;
+        case 4: //desc
+          forSort.sort((a, b) => b.price - a.price);
+          break;
+        case 5: //item code
+          forSort.sort((a, b) => a.barcode.localeCompare(b.barcode));
+          break;
+        default:
+          break;
+      }
+    }
+
+    setSortedBy(forSort)
+  },[productdata, sortBy]);
 
   const handleAdd = () => {
     router.replace("/(create)/addProducts");
@@ -188,7 +220,7 @@ function Inventory() {
             </View>
           </View>
         )}
-        data={productdata}
+        data={sortedBy.length > 0 ? sortedBy : productdata}
         refreshControl={
           <RefreshControl refreshing={refresh} onRefresh={refreshData} />
         }
