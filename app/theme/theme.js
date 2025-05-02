@@ -57,6 +57,7 @@ export const theme = {
       backgroundColor: "#d6deeb",
       color: "#000000",
       borderColor: "#fff",
+      date: "#677183",
     },
     search: {
       backgroundColor: "#d6deeb",
@@ -141,8 +142,9 @@ export const theme = {
     },
     card: {
       backgroundColor: "#131a27",
-      color: "red",
+      color: "#fff",
       borderColor: "#fff",
+      date: "#677183",
     },
     search: {
       backgroundColor: "#131a27",
