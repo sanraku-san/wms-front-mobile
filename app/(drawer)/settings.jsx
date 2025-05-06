@@ -5,9 +5,12 @@ import { themeContext } from "../theme/themeContext";
 import { FontAwesome } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
+// import { selectAuth } from "@/redux/slice";
+
 function Settings() {
   const theme = useContext(themeContext);
   const [darkMode, setDarkMode] = useState(false);
+  // const {token} = useSelector(selectAuth)
   return (
     <View
       style={{
@@ -198,3 +201,22 @@ function Settings() {
 }
 
 export default Settings;
+
+
+//  const handleAdd = () => {
+//     setIsLoading(true);
+//     setTimeout(() => {
+//       setIsLoading(false);
+//     }, 1000);
+//     of (token) {}
+//     createStore(storeData)
+//       .then((res) => {
+//         if (res) {
+//           Alert.alert("Store Added Successfully");
+//           router.back();
+//         }
+//       })
+//       .catch(() => {
+//         Alert.alert("Something went wrong");
+//       });
+//   };

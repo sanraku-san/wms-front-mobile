@@ -1,36 +1,47 @@
 import {URL} from './configuration';
 
-export const getUser = async () =>{
+export const getUser = async (token) =>{
     const res = await fetch(`${URL}/users`,{
         method:'GET',
-        headers:{
-            "Content-Type":"application/json",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
     });
     return res.json();
 }
 
-export const getUserById = async (id) => {
-    const res = await fetch(`${URL}/users/${id}`);
+export const getUserById = async (id, token) => {
+    const res = await fetch(`${URL}/users/${id}`,{
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return res.json();
   };
 
-export const createUser = async (data)=>{
+export const createUser = async (data, token)=>{
     const res = await fetch(`${URL}/users`,{
         method:'POST',
-        headers:{   
-            "Content-Type":"application/json",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body:JSON.stringify(data),
+        body:JSON.stringify(data, token),
     });
     return res.json();
 }
-export const deleteUser = async (id) =>{
+export const deleteUser = async (id, token) =>{
     const res = await fetch(`${URL}/users/${id}`, {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.json();  

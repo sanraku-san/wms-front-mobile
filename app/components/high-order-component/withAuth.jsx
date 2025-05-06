@@ -6,7 +6,7 @@ const withAuth = (WrappedComponent) => {
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
     if (!isAuthenticated) {
-      return <Redirect href="/index" />; 
+      return <Redirect href="" />; 
     }
     return <WrappedComponent />;
   }

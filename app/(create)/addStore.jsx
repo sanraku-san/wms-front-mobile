@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useCallback } from "react";
 import {
   TextInput,
   View,
@@ -6,10 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator
 } from "react-native";
 import { router } from "expo-router";
 import { createStore } from "../api/stores";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 export default function addStore() {
   const [storeData, setStoreData] = useState({
@@ -19,28 +22,90 @@ export default function addStore() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
+    if (!storeData.name || !storeData.address || !storeData.contact_number) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    // ph num
+    if (storeData.contact_number.length === 11) {
+      if (!storeData.contact_number.startsWith("09")) {
+        Alert.alert("Error", "Please enter a valid Philippine mobile number");
+        alert("Error", "Please enter a valid Philippine mobile number");
+        console.log("Please enter a valid Philippine mobile number / 09")
+        return;
+      }
+    } else if (storeData.contact_number.length === 12) {
+      if (!storeData.contact_number.startsWith("+63")) {
+        Alert.alert("Error", "Please enter a valid Philippine mobile number");
+        alert("Error", "Please enter a valid Philippine mobile number");
+        console.log("Please enter a valid Philippine mobile number / +63")
+        return;
+      }
+    } else if (storeData.contact_number.length === 13) {
+      if (!storeData.contact_number.startsWith("0063")) {
+        Alert.alert("Error", "Please enter a valid Philippine mobile number");
+        alert("Error", "Please enter a valid Philippine mobile number");
+        console.log("Please enter a valid Philippine mobile number / ")
+        return;
+      }
+    } else {
+      Alert.alert("Error", "Please enter a valid Philippine mobile number");
+      alert("Error", "Please enter a valid Philippine mobile number");
+      console.log("Please enter a valid Philippine mobile number")
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+    console.log("Submitting store data:", storeData);
+
+    if (token) {
+      createStore(token, storeData)
+        .then((res) => {
+          setIsLoading(false);
+          if (res) {
+            Alert.alert("Success", "Transaction added successfully");
+            // clear form
+            setStoreData({
+              name: "",
+              address: "",
+              contact_number: "",
+            });
+          }
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Store creation error:", error);
+          Alert.alert(
+            "Error",
+            error.message || "Something went wrong with creating the store"
+          );
+        });
+        router.push("/(drawer)/stores")
+    } else {
       setIsLoading(false);
-    }, 1000);
-    createStore(storeData)
-      .then((res) => {
-        if (res) {
-          Alert.alert("Store Added Successfully");
-          router.back();
-        }
-      })
-      .catch(() => {
-        Alert.alert("Something went wrong");
-      });
+      console.warn("Authentication token not found");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to create a store"
+      );
+      router.replace("/");
+    }
+  }, [token, storeData]);
+
+  const handlePhoneChange = (text) => {
+    setStoreData({ ...storeData, contact_number: text });
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
       <View style={styles.main}>
-        <Text style={[styles.label, { color: theme.button.profileText }]}>NAME OF STORE:</Text>
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          NAME OF STORE:
+        </Text>
         <TextInput
           style={styles.input}
           placeholder="Name"
@@ -48,7 +113,9 @@ export default function addStore() {
           value={storeData.name}
           onChangeText={(text) => setStoreData({ ...storeData, name: text })}
         />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>ADDRESS:</Text>
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          ADDRESS:
+        </Text>
         <TextInput
           style={styles.input}
           placeholder="Address"
@@ -56,24 +123,33 @@ export default function addStore() {
           value={storeData.address}
           onChangeText={(text) => setStoreData({ ...storeData, address: text })}
         />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>CONTACT NUMBER:</Text>
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          CONTACT NUMBER:
+        </Text>
         <TextInput
           style={styles.input}
-          placeholder="contact_number"
+          placeholder="09XXXXXXXXX or +63XXXXXXXXX"
           placeholderTextColor="#FFF"
           value={storeData.contact_number}
-          onChangeText={(text) =>
-            setStoreData({ ...storeData, contact_number: text })
-          }
+          onChangeText={handlePhoneChange}
+          maxLength={13}
+          keyboardType="phone-pad"
         />
       </View>
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
         onPress={handleAdd}
+        disabled={isLoading}
       >
-        <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
-          ADD
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color={theme.button.profileIcon} />
+        ) : (
+          <Text
+            style={[styles.buttonText, { color: theme.button.profileIcon }]}
+          >
+            ADD
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );

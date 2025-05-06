@@ -17,6 +17,8 @@ import { FAB } from "react-native-paper";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { themeContext } from "../theme/themeContext";
+import { useSelector } from "react-redux";
+import { selectAuth } from "@/redux/slice";
 
 const forFilter = [
   { label: "All Stores", value: 1 },
@@ -39,6 +41,7 @@ function Stores() {
   const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
 
   const handleAdd = () => {
     router.push("/(create)/addStore");
@@ -74,43 +77,67 @@ function Stores() {
       ]
     );
   };
-  const refreshData = () => {
-    getStores().then((res) => {
-      setStoresData(res.data);
-      console.log(res.data);
-    });
-  };
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [])
-  );
+  // const refreshData = () => {
+  //   getStores().then((res) => {
+  //     setStoresData(res.data);
+  //     console.log(res.data);
+  //   });
+  // };
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     refreshData();
+  //   }, [])
+  // );
 
-
-    useEffect(() => {
-      let forSort = [...storesdata];
-  
-      if (sortBy) {
-        switch (sortBy) {
-          case 1: //name asc
-            forSort.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-          case 2: //name desc
-            forSort.sort((a, b) => b.name.localeCompare(a.name));
-            break;
-          case 3: //address asc
-            forSort.sort((a, b) => a.address.localeCompare(b.address));
-            break;
-          case 4: //address desc
-            forSort.sort((a, b) => b.address.localeCompare(a.address));
-            break;
-          default:
-            break;
-        }
+  const refreshData = useCallback(() => {
+      if (token) { // Ensure you have a token before making the API call
+        getStores(token) // Pass the token here
+          .then((res) => {
+            if (res && res.data) {
+              setStoresData(res.data);
+            } else {
+              console.error("Error fetching products:", res);
+              Alert.alert("Error", "Failed to fetch products.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching products:", error);
+            Alert.alert("Error", "Something went wrong while fetching products.");
+          });
+      } else {
+        console.warn("Authentication token not found. Cannot fetch products.");
+        Alert.alert("Authentication Required", "Please log in to view products.");
+        // Optionally, redirect the user to the login screen
+        router.replace("/login");
       }
+    }, [token]); // Add token to the dependency array of useCallback
   
-      setSortedBy(forSort)
-    },[storesdata, sortBy]);
+    useFocusEffect(refreshData);
+
+  useEffect(() => {
+    let forSort = [...storesdata];
+
+    if (sortBy) {
+      switch (sortBy) {
+        case 1: //name asc
+          forSort.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 2: //name desc
+          forSort.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 3: //address asc
+          forSort.sort((a, b) => a.address.localeCompare(b.address));
+          break;
+        case 4: //address desc
+          forSort.sort((a, b) => b.address.localeCompare(a.address));
+          break;
+        default:
+          break;
+      }
+    }
+
+    setSortedBy(forSort);
+  }, [storesdata, sortBy]);
 
   const renderDropdown = (item) => {
     return (

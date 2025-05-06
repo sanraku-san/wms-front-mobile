@@ -1,21 +1,39 @@
 import {URL} from "./configuration";
 
-export const getTransactions = async () =>{
+export const getTransactions = async (token) =>{
     const res = await fetch(`${URL}/transactions`,{
         method:'GET',
-        headers:{
-            "Content-Type":"application/json",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
     });
     return res.json();
 }
 
-export const deleteTransaction = async (id) =>{
+
+export const createTransactions = async (token, data)=>{
+  const res = await fetch(`${URL}/transactions`,{
+      method:'POST',
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body:JSON.stringify(data),
+  });
+  return res.json();
+}
+
+
+export const deleteTransaction = async (id, token) =>{
     const res = await fetch(`${URL}/transactions/${id}`, {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.json();  

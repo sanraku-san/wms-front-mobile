@@ -1,47 +1,60 @@
 import {URL} from "./configuration";
 
-export const getStores = async () =>{
+export const getStores = async (token) =>{
     const res = await fetch(`${URL}/stores`,{
         method:'GET',
-        headers:{
-            "Content-Type":"application/json",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
     });
     return res.json();
 }
 
-export const createStore = async (data)=>{
+export const createStore = async (token, data)=>{
     const res = await fetch(`${URL}/stores`,{
         method:'POST',
-        headers:{   
-            "Content-Type":"application/json",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body:JSON.stringify(data),
     });
     return res.json();
 }
-export const updateStore = async (id, store) => {
+
+export const updateStore = async (id, store, token) => {
     const res = await fetch(`${URL}/stores/${id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(store),
     });
     return res.json();
   };
-  export const getStoresById = async (id) => {
-    const res = await fetch(`${URL}/stores/${id}`);
+  export const getStoresById = async (id, token) => {
+    const res = await fetch(`${URL}/stores/${id}`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return res.json();
   };
 
-export const deleteStore = async (id) =>{
+export const deleteStore = async (id, token) =>{
     const res = await fetch(`${URL}/stores/${id}`, {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.json();  

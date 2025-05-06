@@ -21,12 +21,16 @@ import { FAB } from "react-native-paper";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 const forFilter = [
   { label: "All Items", value: 1 },
-  { label: "Incoming", value: 2 },
-  { label: "Out of Stock", value: 3 },
-  { label: "Low Stock", value: 4 },
+  { label: "Food", value: 2 },
+  { label: "Clothing", value: 3 },
+  { label: "Electronics", value: 4 },
+  { label: "Furniture", value: 5 },
+  { label: "Toys", value: 6 },
 ];
 
 const forSortBy = [
@@ -44,6 +48,7 @@ function Inventory() {
   const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
+  const {token} = useSelector(selectAuth)
 
   const handleDelete = (id) => {
     Alert.alert(
@@ -73,47 +78,115 @@ function Inventory() {
       ]
     );
   };
-  const refreshData = () => {
-    getProducts().then((res) => {
-      setProductData(res.data);
-    });
-  };
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [])
-  );
+  // const refreshData = () => {
+
+  //   getProducts().then((res) => {
+  //     setProductData(res.data);
+  //   });
+  // };
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     refreshData();
+  //   }, [])
+  // );
+
+
+  const refreshData = useCallback(() => {
+    if (token) { // Ensure you have a token before making the API call
+      getProducts(token) // Pass the token here
+        .then((res) => {
+          if (res && res.data) {
+            setProductData(res.data);
+          } else {
+            console.error("Error fetching products:", res);
+            Alert.alert("Error", "Failed to fetch products.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching products:", error);
+          Alert.alert("Error", "Something went wrong while fetching products.");
+        });
+    } else {
+      console.warn("Authentication token not found. Cannot fetch products.");
+      Alert.alert("Authentication Required", "Please log in to view products.");
+      // Optionally, redirect the user to the login screen
+      router.replace("/login");
+    }
+  }, [token]); // Add token to the dependency array of useCallback
+
+  useFocusEffect(refreshData);
 
 
   // pang sort dropdown function
   useEffect(() => {
-    let forSort = [...productdata];
+    let filteredData = [...productdata];
 
-    if (sortBy) {
-      switch (sortBy) {
-        case 1: //name asc
-          forSort.sort((a, b) => a.name.localeCompare(b.name));
+    // Apply category filtering
+    if (filter) {
+      switch (filter) {
+        case 1: // All Items
+          // No filtering needed
           break;
-        case 2: //name desc
-          forSort.sort((a, b) => b.name.localeCompare(a.name));
+        case 2: // Food
+          filteredData = filteredData.filter(item => 
+            item.category?.name?.toLowerCase() === 'food');
           break;
-        case 3: //asc
-          forSort.sort((a, b) => a.price - b.price);
+        case 3: // Clothing
+          filteredData = filteredData.filter(item => 
+            item.category?.name?.toLowerCase() === 'clothing');
           break;
-        case 4: //desc
-          forSort.sort((a, b) => b.price - a.price);
+        case 4: // Electronics
+          filteredData = filteredData.filter(item => 
+            item.category?.name?.toLowerCase() === 'electronics');
           break;
-        case 5: //item code
-          forSort.sort((a, b) => a.barcode.localeCompare(b.barcode));
+        case 5: // Furniture
+          filteredData = filteredData.filter(item => 
+            item.category?.name?.toLowerCase() === 'furniture');
+          break;
+        case 6: // Toys
+          filteredData = filteredData.filter(item => 
+            item.category?.name?.toLowerCase() === 'toys');
           break;
         default:
           break;
       }
     }
-
-    setSortedBy(forSort)
-  },[productdata, sortBy]);
-
+    
+    // Apply sorting (your existing sorting logic)
+    if (sortBy) {
+      switch (sortBy) {
+        case 1: //name asc
+          filteredData.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 2: //name desc
+          filteredData.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 3: //asc
+          filteredData.sort((a, b) => a.price - b.price);
+          break;
+        case 4: //desc
+          filteredData.sort((a, b) => b.price - a.price);
+          break;
+        case 5: //item code
+          filteredData.sort((a, b) => a.barcode.localeCompare(b.barcode));
+          break;
+        default:
+          break;
+      }
+    }
+  
+    setSortedBy(filteredData);
+  }, [productdata, sortBy, filter, 
+    // searchText
+  ]); // Add searchText to the dependency array
+  
+  // Function to reset all filters and sorting
+  const resetFilters = () => {
+    // setSearchText("");
+    setFilter("");
+    setSortBy("");
+  };
+  
   const handleAdd = () => {
     router.replace("/(create)/addProducts");
   };
@@ -293,7 +366,7 @@ function Inventory() {
                     onPress={() => pushToEdit(item.id)}
                     style={[
                       styles.btn,
-                      { backgroundColor: theme.button.backgroundColor },
+                      { backgroundColor: theme.button.edit },
                     ]}
                   >
                     <Icon3
@@ -307,7 +380,7 @@ function Inventory() {
                     onPress={() => handleDelete(item.id)}
                     style={[
                       styles.btn,
-                      { backgroundColor: theme.button.backgroundColor },
+                      { backgroundColor: theme.button.delete },
                     ]}
                   >
                     <Icon2

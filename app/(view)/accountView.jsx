@@ -15,7 +15,8 @@ import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { Barcode } from "expo-barcode-generator";
 import { getUserById } from "../api/accounts";
-
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 import { themeContext } from "../theme/themeContext";
 
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -23,6 +24,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 function AccountView() {
   const [refresh, setRefresh] = useState(false);
   const { id } = useLocalSearchParams();
+  const { token } = useSelector(selectAuth);
   const [userData, setUserData] = useState({
     name: "",
     username: "",
@@ -31,19 +33,46 @@ function AccountView() {
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
 
+  // const refreshData = useCallback(() => {
+  //   getUserById(id).then((res) => {
+  //     setUserData(res.data);
+  //   });
+  // }, [id]);
+
+  // console.log("Product Data:", userData); // Debugggz
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     refreshData();
+  //   }, [refreshData])
+  // );
+
   const refreshData = useCallback(() => {
-    getUserById(id).then((res) => {
-      setUserData(res.data);
-    });
-  }, [id]);
+      if (token) { // Ensure you have a token before making the API call
+        getUserById(id, token) // Pass the token here
+          .then((res) => {
+            if (res && res.data) {
+              setUserData(res.data);
+            } else {
+              console.error("Error fetching products:", res);
+              Alert.alert("Error", "Failed to fetch products.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching products:", error);
+            Alert.alert("Error", "Something went wrong while fetching products.");
+          });
+      } else {
+        console.warn("Authentication token not found. Cannot fetch products.");
+        Alert.alert("Authentication Required", "Please log in to view products.");
+        // Optionally, redirect the user to the login screen
+        router.replace("/login");
+      }
+    }, [id, token]); // Add token to the dependency array of useCallback
+  
+    useFocusEffect(refreshData);
 
-  console.log("Product Data:", userData); // Debugggz
-
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [refreshData])
-  );
+    
   const handleDelete = (id) => {
     Alert.alert(
       "Confirm Delete",

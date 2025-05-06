@@ -18,6 +18,8 @@ import { FAB } from "react-native-paper";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { themeContext } from "../theme/themeContext";
+import { useSelector } from "react-redux";
+import { selectAuth } from "@/redux/slice";
 
 // not working pa ang filter and search
 const forFilter = [
@@ -40,6 +42,7 @@ function Accounts() {
   const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
 
   const handleAdd = () => {
     router.push("/(create)/createAccount");
@@ -74,17 +77,42 @@ function Accounts() {
     );
   };
 
-  const refreshData = () => {
-    getUser().then((res) => {
-      setUserData(res.data);
-      console.log(res.data);
-    });
-  };
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [])
-  );
+  // const refreshData = () => {
+  //   getUser().then((res) => {
+  //     setUserData(res.data);
+  //     console.log(res.data);
+  //   });
+  // };
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     refreshData();
+  //   }, [])
+  // );
+
+  const refreshData = useCallback(() => {
+      if (token) { // Ensure you have a token before making the API call
+        getUser(token) // Pass the token here
+          .then((res) => {
+            if (res && res.data) {
+              setUserData(res.data);
+            } else {
+              console.error("Error fetching products:", res);
+              Alert.alert("Error", "Failed to fetch products.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching products:", error);
+            Alert.alert("Error", "Something went wrong while fetching products.");
+          });
+      } else {
+        console.warn("Authentication token not found. Cannot fetch products.");
+        Alert.alert("Authentication Required", "Please log in to view products.");
+        // Optionally, redirect the user to the login screen
+        router.replace("/login");
+      }
+    }, [token]); // Add token to the dependency array of useCallback
+  
+    useFocusEffect(refreshData);
 
   useEffect(() => {
     let forSort = [...userdata];

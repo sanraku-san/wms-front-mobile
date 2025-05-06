@@ -15,6 +15,8 @@ import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 import { Barcode } from "expo-barcode-generator";
 import { getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 function ProductView() {
   const [refresh, setRefresh] = useState(false);
@@ -28,20 +30,48 @@ function ProductView() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
+
+  // const refreshData = useCallback(() => {
+  //   getProductById(id).then((res) => {
+  //     setProductData(res.data);
+  //   });
+  // }, [id]);
+
+  // console.log("Product Data:", productData); // Debug
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     refreshData();
+  //   }, [refreshData])
+  // );
 
   const refreshData = useCallback(() => {
-    getProductById(id).then((res) => {
-      setProductData(res.data);
-    });
-  }, [id]);
+    if (token) {
+      // Ensure you have a token before making the API call
+      getProductById(id, token) // Pass the token here
+        .then((res) => {
+          if (res && res.data) {
+            setProductData(res.data);
+          } else {
+            console.error("Error fetching products:", res);
+            Alert.alert("Error", "Failed to fetch products.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching products:", error);
+          Alert.alert("Error", "Something went wrong while fetching products.");
+        });
+    } else {
+      console.warn("Authentication token not found. Cannot fetch products.");
+      Alert.alert("Authentication Required", "Please log in to view products.");
+      // Optionally, redirect the user to the login screen
+      router.replace("/login");
+    }
+  }, [id, token]); // Add token to the dependency array of useCallback
 
-  console.log("Product Data:", productData); // Debug
+  useFocusEffect(refreshData);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshData();
-    }, [refreshData])
-  );
   const handleDelete = (id) => {
     Alert.alert(
       "Confirm Delete",

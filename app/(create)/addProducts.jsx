@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useCallback } from "react";
 import {
   TextInput,
   View,
@@ -6,11 +6,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { router } from "expo-router";
 import { createProduct } from "../api/products";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 const categories = [
   { label: "Food", value: 1 },
@@ -30,24 +33,75 @@ export default function AddProducts() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
 
-  const handleAdd = () => {
+  // const handleAdd = () => {
+  //   setIsLoading(true);
+  //   console.log(productData);
+  //   setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 1000);
+  //   createProduct(productData)
+  //     .then((res) => {
+  //       if (res) {
+  //         Alert.alert("Product Added Successfully");
+  //         router.replace("/inventory");
+  //       }
+  //     })
+  //     .catch(() => {
+  //       Alert.alert("Something went wrong");
+  //     });
+  // };
+
+  const handleAdd = useCallback(() => {
+    if (
+      !productData.name ||
+      !productData.description ||
+      !productData.price ||
+      !productData.barcode ||
+      !productData.category_id
+    ) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
     setIsLoading(true);
-    console.log(productData);
-    setTimeout(() => {
+    console.log("Submitting product data:", productData);
+
+    if (token) {
+      createProduct(token, productData)
+        .then((res) => {
+          setIsLoading(false);
+          if (res) {
+            Alert.alert("Success", "Transaction added successfully");
+            // clear form
+            setProductData({
+              name: "",
+              description: "",
+              price: "",
+              barcode: "",
+              category_id: null,
+            });
+          }
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Product creation error:", error);
+          Alert.alert(
+            "Error",
+            error.message || "Something went wrong with creating the product"
+          );
+        });
+      router.push("/(drawer)/inventory");
+    } else {
       setIsLoading(false);
-    }, 1000);
-    createProduct(productData)
-      .then((res) => {
-        if (res) {
-          Alert.alert("Product Added Successfully");
-          router.replace("/inventory");
-        }
-      })
-      .catch(() => {
-        Alert.alert("Something went wrong");
-      });
-  };
+      console.warn("Authentication token not found");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to create a product"
+      );
+      router.replace("/");
+    }
+  }, [token, productData]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
@@ -119,10 +173,17 @@ export default function AddProducts() {
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
         onPress={handleAdd}
+        disabled={isLoading}
       >
-        <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
-          ADD
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color={theme.button.profileIcon} />
+        ) : (
+          <Text
+            style={[styles.buttonText, { color: theme.button.profileIcon }]}
+          >
+            ADD PRODUCT
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );
