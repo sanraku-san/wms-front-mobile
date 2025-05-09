@@ -23,7 +23,7 @@ export const getUserById = async (id, token) => {
     return res.json();
   };
 
-export const createUser = async (data, token)=>{
+export const createUser = async (token, data)=>{
     const res = await fetch(`${URL}/users`,{
         method:'POST',
         headers: {

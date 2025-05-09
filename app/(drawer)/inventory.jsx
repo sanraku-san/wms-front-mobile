@@ -48,7 +48,7 @@ function Inventory() {
   const [sortedBy, setSortedBy] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
-  const {token} = useSelector(selectAuth)
+  const { token } = useSelector(selectAuth);
 
   const handleDelete = (id) => {
     Alert.alert(
@@ -63,7 +63,7 @@ function Inventory() {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteProduct(id)
+            deleteProduct(id, token)
               .then((res) => {
                 if (res) {
                   Alert.alert("Product deleted successfully");
@@ -78,21 +78,10 @@ function Inventory() {
       ]
     );
   };
-  // const refreshData = () => {
-
-  //   getProducts().then((res) => {
-  //     setProductData(res.data);
-  //   });
-  // };
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     refreshData();
-  //   }, [])
-  // );
-
-
+  
   const refreshData = useCallback(() => {
-    if (token) { // Ensure you have a token before making the API call
+    if (token) {
+      // Ensure you have a token before making the API call
       getProducts(token) // Pass the token here
         .then((res) => {
           if (res && res.data) {
@@ -116,7 +105,6 @@ function Inventory() {
 
   useFocusEffect(refreshData);
 
-
   // pang sort dropdown function
   useEffect(() => {
     let filteredData = [...productdata];
@@ -128,30 +116,35 @@ function Inventory() {
           // No filtering needed
           break;
         case 2: // Food
-          filteredData = filteredData.filter(item => 
-            item.category?.name?.toLowerCase() === 'food');
+          filteredData = filteredData.filter(
+            (item) => item.category?.name?.toLowerCase() === "food"
+          );
           break;
         case 3: // Clothing
-          filteredData = filteredData.filter(item => 
-            item.category?.name?.toLowerCase() === 'clothing');
+          filteredData = filteredData.filter(
+            (item) => item.category?.name?.toLowerCase() === "clothing"
+          );
           break;
         case 4: // Electronics
-          filteredData = filteredData.filter(item => 
-            item.category?.name?.toLowerCase() === 'electronics');
+          filteredData = filteredData.filter(
+            (item) => item.category?.name?.toLowerCase() === "electronics"
+          );
           break;
         case 5: // Furniture
-          filteredData = filteredData.filter(item => 
-            item.category?.name?.toLowerCase() === 'furniture');
+          filteredData = filteredData.filter(
+            (item) => item.category?.name?.toLowerCase() === "furniture"
+          );
           break;
         case 6: // Toys
-          filteredData = filteredData.filter(item => 
-            item.category?.name?.toLowerCase() === 'toys');
+          filteredData = filteredData.filter(
+            (item) => item.category?.name?.toLowerCase() === "toys"
+          );
           break;
         default:
           break;
       }
     }
-    
+
     // Apply sorting (your existing sorting logic)
     if (sortBy) {
       switch (sortBy) {
@@ -174,19 +167,22 @@ function Inventory() {
           break;
       }
     }
-  
+
     setSortedBy(filteredData);
-  }, [productdata, sortBy, filter, 
+  }, [
+    productdata,
+    sortBy,
+    filter,
     // searchText
   ]); // Add searchText to the dependency array
-  
+
   // Function to reset all filters and sorting
   const resetFilters = () => {
     // setSearchText("");
     setFilter("");
     setSortBy("");
   };
-  
+
   const handleAdd = () => {
     router.replace("/(create)/addProducts");
   };
@@ -364,10 +360,7 @@ function Inventory() {
                 <View>
                   <TouchableOpacity
                     onPress={() => pushToEdit(item.id)}
-                    style={[
-                      styles.btn,
-                      { backgroundColor: theme.button.edit },
-                    ]}
+                    style={[styles.btn, { backgroundColor: theme.button.edit }]}
                   >
                     <Icon3
                       name="store-edit"
@@ -414,6 +407,8 @@ function Inventory() {
     </View>
   );
 }
+
+export default Inventory;
 
 const styles = StyleSheet.create({
   main: {
@@ -494,4 +489,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Inventory;
+

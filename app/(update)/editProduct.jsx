@@ -11,6 +11,8 @@ import { Dropdown } from "react-native-element-dropdown";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { updateProduct, getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 const categories = [
   { label: "Food", value: 1 },
@@ -32,23 +34,48 @@ export default function EditProducts() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
+
+  // useEffect(() => {
+  //   getProductById(id).then((res) => {
+  //     setProductData(res.data);
+  //   });
+  // }, [id]);
 
   useEffect(() => {
-    getProductById(id).then((res) => {
-      setProductData(res.data);
-    });
-  }, [id]);
+    if (token) {
+      getProductById(id, token).then((res) => {
+        setProductData(res.data);
+      })
+      .catch(error => {
+        console.error("Error fetching product:", error);
+        Alert.alert("Error", "Failed to load product details");
+      });
+    } else {
+      Alert.alert("Authentication Required", "Please log in to view product details");
+      router.replace("/");
+    }
+  }, [id, token]);
 
   const handleUpdate = () => {
-    console.log("Payload being sent:", productData); // Debugging payload
+    console.log("Payload being sent:", productData);
     setIsLoading(true);
-    updateProduct(id, productData)
+  
+    if (!token) {
+      setIsLoading(false);
+      console.warn("Authentication token not found");
+      Alert.alert("Authentication Required", "Please log in to update the product");
+      router.replace("/");
+      return;
+    }
+  
+    updateProduct(id, productData, token)
       .then(() => {
         Alert.alert("Product Updated Successfully");
         router.replace("/inventory");
       })
       .catch((error) => {
-        console.error("Update failed:", error); // Log errors
+        console.error("Update failed:", error);
         Alert.alert("Something went wrong");
       })
       .finally(() => {
@@ -56,6 +83,7 @@ export default function EditProducts() {
       });
   };
 
+ 
   return (
     <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
       <View style={styles.main}>
@@ -129,10 +157,7 @@ export default function EditProducts() {
         />
       </View>
       <TouchableOpacity
-        style={[
-          styles.button,
-          { backgroundColor: "#Cbd5e1" },
-        ]}
+        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
         onPress={handleUpdate}
       >
         <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
@@ -179,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
     alignSelf: "center",
-    borderColor:"#Cbd5e1"
+    borderColor: "#Cbd5e1",
   },
   buttonText: {
     fontWeight: "bold",

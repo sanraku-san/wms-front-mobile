@@ -6,7 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Pressable
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { router } from "expo-router";
@@ -34,24 +35,6 @@ export default function AddProducts() {
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-
-  // const handleAdd = () => {
-  //   setIsLoading(true);
-  //   console.log(productData);
-  //   setTimeout(() => {
-  //     setIsLoading(false);
-  //   }, 1000);
-  //   createProduct(productData)
-  //     .then((res) => {
-  //       if (res) {
-  //         Alert.alert("Product Added Successfully");
-  //         router.replace("/inventory");
-  //       }
-  //     })
-  //     .catch(() => {
-  //       Alert.alert("Something went wrong");
-  //     });
-  // };
 
   const handleAdd = useCallback(() => {
     if (
@@ -91,7 +74,7 @@ export default function AddProducts() {
             error.message || "Something went wrong with creating the product"
           );
         });
-      router.push("/(drawer)/inventory");
+      router.push("/(drawer)/inventory")
     } else {
       setIsLoading(false);
       console.warn("Authentication token not found");
@@ -106,6 +89,7 @@ export default function AddProducts() {
   return (
     <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
       <View style={styles.main}>
+        {/* <Pressable onPress={router.push(Inventory)}><Text>BACK</Text></Pressable> */}
         <Text style={[styles.label, { color: theme.button.profileText }]}>
           NAME OF PRODUCT:
         </Text>

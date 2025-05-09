@@ -61,7 +61,7 @@ function Accounts() {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteUser(id)
+            deleteUser(id, token)
               .then((res) => {
                 if (res) {
                   Alert.alert("User deleted successfully");
@@ -76,18 +76,6 @@ function Accounts() {
       ]
     );
   };
-
-  // const refreshData = () => {
-  //   getUser().then((res) => {
-  //     setUserData(res.data);
-  //     console.log(res.data);
-  //   });
-  // };
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     refreshData();
-  //   }, [])
-  // );
 
   const refreshData = useCallback(() => {
       if (token) { // Ensure you have a token before making the API call

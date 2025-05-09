@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useCallback } from "react";
 import {
   TextInput,
   View,
@@ -6,11 +6,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 
 import { router } from "expo-router";
 import { createUser } from "../api/accounts";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 export default function createAccount() {
   const [userData, setUserData] = useState({
@@ -23,24 +26,59 @@ export default function createAccount() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
+    if (
+      !userData.first_name ||
+      !userData.last_name ||
+      !userData.username ||
+      !userData.email ||
+      !userData.password ||
+      !userData.contact_number
+    ) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
     setIsLoading(true);
-    console.log(userData);
-    setTimeout(() => {
+    console.log("Submitting new account data:", userData);
+
+    if (token) {
+      createUser(token, userData)
+        .then((res) => {
+          setIsLoading(false);
+          if (res) {
+            Alert.alert("Success", "Account added successfully");
+            // clear form
+            setUserData({
+              first_name: "",
+              last_name: "",
+              username: "",
+              email: "",
+              password: "",
+              contact_number: null,
+            });
+          }
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Account creation error:", error);
+          Alert.alert(
+            "Error",
+            error.message || "Something went wrong with creating the account"
+          );
+        });
+      router.push("/(drawer)/accounts");
+    } else {
       setIsLoading(false);
-    }, 1000);
-    createUser(userData)
-      .then((res) => {
-        if (res) {
-          Alert.alert("New Account!");
-          router.back();
-        }
-      })
-      .catch(() => {
-        Alert.alert("Something went wrong");
-      });
-  };
+      console.warn("Authentication token not found");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to create a account"
+      );
+      router.replace("/");
+    }
+  }, [token, userData]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
@@ -165,16 +203,17 @@ export default function createAccount() {
             { marginTop: 90 },
           ]}
           onPress={handleAdd}
+          disabled={isLoading}
         >
-          <Text
-            style={[
-              styles.buttonText,
-              { color: theme.button.profileIcon },
-              { fontWeight: "bold" },
-            ]}
-          >
-            CREATE
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color={theme.button.profileIcon} />
+          ) : (
+            <Text
+              style={[styles.buttonText, { color: theme.button.profileIcon }]}
+            >
+              CREATE
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

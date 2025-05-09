@@ -27,7 +27,7 @@ export const createStore = async (token, data)=>{
 
 export const updateStore = async (id, store, token) => {
     const res = await fetch(`${URL}/stores/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -37,8 +37,10 @@ export const updateStore = async (id, store, token) => {
     });
     return res.json();
   };
+
   export const getStoresById = async (id, token) => {
     const res = await fetch(`${URL}/stores/${id}`, {
+      method: "GET",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

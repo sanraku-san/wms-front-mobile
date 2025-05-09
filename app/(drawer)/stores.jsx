@@ -62,7 +62,7 @@ function Stores() {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteStore(id)
+            deleteStore(id, token)
               .then((res) => {
                 if (res) {
                   Alert.alert("Store deleted successfully");
@@ -77,17 +77,6 @@ function Stores() {
       ]
     );
   };
-  // const refreshData = () => {
-  //   getStores().then((res) => {
-  //     setStoresData(res.data);
-  //     console.log(res.data);
-  //   });
-  // };
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     refreshData();
-  //   }, [])
-  // );
 
   const refreshData = useCallback(() => {
       if (token) { // Ensure you have a token before making the API call

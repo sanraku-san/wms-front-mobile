@@ -10,6 +10,8 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getStoresById, updateStore } from "../api/stores";
 import { themeContext } from "../theme/themeContext";
+import { selectAuth } from "@/redux/slice";
+import { useSelector } from "react-redux";
 
 export default function editStore() {
   const router = useRouter();
@@ -21,20 +23,46 @@ export default function editStore() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
+  const { token } = useSelector(selectAuth);
+
+  // useEffect(() => {
+  //   getStoresById(id).then((res) => {
+  //     setStoreData(res.data);
+  //   });
+  // }, [id]);
+
 
   useEffect(() => {
-    getStoresById(id).then((res) => {
-      setStoreData(res.data);
-    });
-  }, [id]);
+      if (token) {
+        getStoresById(id, token).then((res) => {
+          setStoreData(res.data);
+        })
+        .catch(error => {
+          console.error("Error fetching store:", error);
+          Alert.alert("Error", "Failed to load store details");
+        });
+      } else {
+        Alert.alert("Authentication Required", "Please log in to view store details");
+        router.replace("/");
+      }
+    }, [id, token]);
 
   const handleUpdate = () => {
     console.log("Payload being sent:", storeData);
     setIsLoading(true);
-    updateStore(id, storeData)
+
+    if (!token) {
+          setIsLoading(false);
+          console.warn("Authentication token not found");
+          Alert.alert("Authentication Required", "Please log in to update the store");
+          router.replace("/");
+          return;
+        }
+
+    updateStore(id, storeData, token)
       .then(() => {
         Alert.alert("Store Updated Successfully");
-        router.replace('/stores');
+        router.replace("/stores");
       })
       .catch((error) => {
         console.error("Update failed:", error);
@@ -57,7 +85,9 @@ export default function editStore() {
           value={storeData.name}
           onChangeText={(text) => setStoreData({ ...storeData, name: text })}
         />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>ADDRESS:</Text>
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          ADDRESS:
+        </Text>
         <TextInput
           style={styles.input}
           placeholder="Address"
@@ -77,13 +107,12 @@ export default function editStore() {
         />
       </View>
       <TouchableOpacity
-        style={[
-          styles.button,
-          { backgroundColor:"#Cbd5e1" },
-        ]}
+        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
         onPress={handleUpdate}
       >
-        <Text style={[styles.buttonText, {color: theme.button.profileIcon}]}>UPDATE</Text>
+        <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
+          UPDATE
+        </Text>
       </TouchableOpacity>
     </View>
   );

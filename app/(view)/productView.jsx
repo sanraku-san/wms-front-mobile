@@ -32,20 +32,6 @@ function ProductView() {
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
-  // const refreshData = useCallback(() => {
-  //   getProductById(id).then((res) => {
-  //     setProductData(res.data);
-  //   });
-  // }, [id]);
-
-  // console.log("Product Data:", productData); // Debug
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     refreshData();
-  //   }, [refreshData])
-  // );
-
   const refreshData = useCallback(() => {
     if (token) {
       // Ensure you have a token before making the API call
@@ -85,14 +71,17 @@ function ProductView() {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteProduct(id)
+            deleteProduct(id, token)
               .then((res) => {
                 if (res) {
                   Alert.alert("Product deleted successfully");
-                  refreshData();
-                }
+                  router.push("inventory");
+              } else {
+                Alert.alert("Failed to delete product");
+              }
               })
               .catch(() => {
+                console.error("Delete error:", error);
                 Alert.alert("Something went wrong while deleting the product");
               });
           },

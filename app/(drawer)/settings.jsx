@@ -201,22 +201,3 @@ function Settings() {
 }
 
 export default Settings;
-
-
-//  const handleAdd = () => {
-//     setIsLoading(true);
-//     setTimeout(() => {
-//       setIsLoading(false);
-//     }, 1000);
-//     of (token) {}
-//     createStore(storeData)
-//       .then((res) => {
-//         if (res) {
-//           Alert.alert("Store Added Successfully");
-//           router.back();
-//         }
-//       })
-//       .catch(() => {
-//         Alert.alert("Something went wrong");
-//       });
-//   };

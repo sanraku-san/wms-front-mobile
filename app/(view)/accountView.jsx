@@ -33,20 +33,6 @@ function AccountView() {
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
 
-  // const refreshData = useCallback(() => {
-  //   getUserById(id).then((res) => {
-  //     setUserData(res.data);
-  //   });
-  // }, [id]);
-
-  // console.log("Product Data:", userData); // Debugggz
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     refreshData();
-  //   }, [refreshData])
-  // );
-
   const refreshData = useCallback(() => {
       if (token) { // Ensure you have a token before making the API call
         getUserById(id, token) // Pass the token here

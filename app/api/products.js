@@ -28,21 +28,9 @@ export const createProduct = async (token, data) => {
   return res.json();
 };
 
-// export const createStore = async (token, data)=>{
-//   const res = await fetch(`${URL}/stores`,{
-//       method:'POST',
-//       headers: {
-//         Accept: "application/json",
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${token}`,
-//       },
-//       body:JSON.stringify(data),
-//   });
-//   return res.json();
-// }
 export const updateProduct = async (id, product, token) => {
   const res = await fetch(`${URL}/products/${id}`, {
-    method: "PUT",
+    method: "PATCH",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
@@ -53,10 +41,10 @@ export const updateProduct = async (id, product, token) => {
   return res.json();
 };
 
-export const getProductById = async (id) => {
+export const getProductById = async (id, token) => {
   const res = await fetch(`${URL}/products/${id}`, {
+    method: "GET",
     headers: {
-      method: "GET",
       Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
