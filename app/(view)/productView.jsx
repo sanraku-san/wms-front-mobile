@@ -12,7 +12,7 @@ import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
-import { Barcode } from "expo-barcode-generator";
+// import { Barcode } from "expo-barcode-generator";
 import { getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
@@ -179,7 +179,7 @@ function ProductView() {
               borderRadius: 10,
             }}
           >
-            <Barcode
+            {/* <Barcode
               value={productData.barcode || "123456789012"}
               options={{
                 format: "CODE128",
@@ -187,7 +187,7 @@ function ProductView() {
                 width: 2.5,
                 fontSize: 15,
               }}
-            />
+            /> */}
           </View>
         </View>
         <View

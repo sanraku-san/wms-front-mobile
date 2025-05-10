@@ -44,36 +44,36 @@ function TransactionsHistory() {
   const { token } = useSelector(selectAuth);
 
   console.log("History Data:", historydata);
-  const handleDelete = (id) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this Transaction?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            deleteTransaction(id)
-              .then((res) => {
-                if (res) {
-                  Alert.alert("Transaction deleted successfully");
-                  refreshData();
-                }
-              })
-              .catch(() => {
-                Alert.alert(
-                  "Something went wrong while deleting the Transaction"
-                );
-              });
-          },
-        },
-      ]
-    );
-  };
+  // const handleDelete = (id) => {
+  //   Alert.alert(
+  //     "Confirm Delete",
+  //     "Are you sure you want to delete this Transaction?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "Delete",
+  //         style: "destructive",
+  //         onPress: () => {
+  //           deleteTransaction(id)
+  //             .then((res) => {
+  //               if (res) {
+  //                 Alert.alert("Transaction deleted successfully");
+  //                 refreshData();
+  //               }
+  //             })
+  //             .catch(() => {
+  //               Alert.alert(
+  //                 "Something went wrong while deleting the Transaction"
+  //               );
+  //             });
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
   const refreshData = useCallback(() => {
     if (token) {

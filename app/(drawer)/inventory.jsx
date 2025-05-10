@@ -14,7 +14,7 @@ import { useFocusEffect } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
-import { Barcode } from "expo-barcode-generator";
+// import { Barcode } from "expo-barcode-generator";
 import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
 import { FAB } from "react-native-paper";
@@ -78,7 +78,7 @@ function Inventory() {
       ]
     );
   };
-  
+
   const refreshData = useCallback(() => {
     if (token) {
       // Ensure you have a token before making the API call
@@ -329,7 +329,7 @@ function Inventory() {
                       source={require("../../assets/images/box.jpg")}
                       style={styles.productImage}
                     />
-                    <View style={styles.barcodeContainer}>
+                    {/* <View style={styles.barcodeContainer}>
                       <Barcode
                         value={item.barcode}
                         options={{
@@ -341,7 +341,7 @@ function Inventory() {
                           lineColor: theme.button.profileText,
                         }}
                       />
-                    </View>
+                    </View> */}
                   </View>
                   <View style={styles.card2}>
                     <Text style={[styles.text, { color: theme.item.title }]}>
@@ -488,5 +488,3 @@ const styles = StyleSheet.create({
     padding: 5,
   },
 });
-
-

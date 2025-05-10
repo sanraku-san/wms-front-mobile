@@ -13,7 +13,7 @@ import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
-import { Barcode } from "expo-barcode-generator";
+// import { Barcode } from "expo-barcode-generator";
 import { getUserById } from "../api/accounts";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
