@@ -8,17 +8,20 @@ import {
   ActivityIndicator,
 } from "react-native";
 import withoutAuth from "./components/high-order-component/withoutAuth";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { loginUser } from "./api/auth";
 import { useDispatch } from "react-redux";
 import { useRouter } from "expo-router";
 import { login } from "../redux/slice";
+import { MaterialIcons } from "@expo/vector-icons";
+import { themeContext } from "./theme/themeContext";
 
 const Index = () => {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
+  const theme = useContext(themeContext);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -28,9 +31,8 @@ const Index = () => {
         dispatch(login(res.data));
 
         router.push("/(drawer)/(tabs)");
-        Alert.alert("wahhh");
+        Alert.alert("Welcom to WMS", "You are logged in successfully");
         console.log("success");
-
       } else {
         Alert.alert(res.message || "Login failed. Please try again.");
       }
@@ -44,7 +46,14 @@ const Index = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Login</Text>
+      <View style={styles.iconContainer}>
+        <MaterialIcons
+          style={styles.icon}
+          name="warehouse"
+          size={40}
+          color={theme.color}
+        />
+      </View>
       <View style={styles.loginData}>
         <TextInput
           style={styles.input}
@@ -73,7 +82,7 @@ const Index = () => {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.Box}>Log ako</Text>
+            <Text style={styles.Box}>Log in</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -85,19 +94,25 @@ export default withoutAuth(Index);
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    alignItems: "center",
+  },
+  iconContainer: {
+    marginTop: "40%", 
     justifyContent: "center",
     alignItems: "center",
-    flex: 1,
+    backgroundColor: "#c4d0e3",
+    borderRadius: 50,
+    width: 80,
+    height:80,
   },
-  text: {
-    fontSize: 30,
-    padding: 5,
-    fontWeight: "bold",
+  icon: {
+    color: "#fff",
   },
   Box: {
-    fontSize: 20,
     padding: 5,
     color: "#fff",
+    borderRadius:13
   },
   register: {
     justifyContent: "center",
@@ -105,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   click: {
-    backgroundColor: "lightblue",
+    backgroundColor: "#c4d0e3",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
@@ -118,19 +133,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#a0c4ff",
   },
   loginData: {
+    marginTop:"30%",
+    flex: 1,
+    alignItems: "center",
     width: "80%",
-    marginTop: 20,
-    alignItems: "center"
   },
   input: {
-    height: 40,
-    borderColor: "#ccc",
+    height: 55,
+    borderColor:"#c4d0e3",
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 13,
     marginBottom: 10,
     paddingHorizontal: 10,
-    backgroundColor: "#fff",
-    width: "100%"
-    
+    width:"100%" ,
   },
 });
