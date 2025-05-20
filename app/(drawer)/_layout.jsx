@@ -156,8 +156,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="accounts"
           options={{
-            drawerLabel: "Manage Accounts",
-            title: "Manage Accounts",
+            drawerLabel: "Admin Panel",
+            title: "Admin Panel",
             headerTitleStyle: { color: theme.header.color },
             headerStyle: { backgroundColor: theme.header.backgroundColor },
             headerRight: () => (

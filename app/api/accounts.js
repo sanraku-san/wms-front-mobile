@@ -11,6 +11,17 @@ export const getUser = async (token) =>{
     });
     return res.json();
 }
+export const getProfile = async (token) =>{
+    const res = await fetch(`${URL}/profile`,{
+        method:'GET',
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+    });
+    return res.json();
+}
 
 export const getUserById = async (id, token) => {
     const res = await fetch(`${URL}/users/${id}`,{

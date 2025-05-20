@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { getTransactionById } from "../api/transactions";
 import { router } from "expo-router";
@@ -17,13 +17,45 @@ import { useSelector } from "react-redux";
 import { themeContext } from "../theme/themeContext";
 
 function TransactionView() {
-  const { id } = useLocalSearchParams();
+  const { id, allTransactions } = useLocalSearchParams();
   const [transactionData, setTransactionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [allTransactionsData, setAllTransactionsData] = useState([]);
   const { token } = useSelector(selectAuth);
   const theme = useContext(themeContext);
 
+  console.log("transaction data", transactionData);
+
+  // Parse the allTransactions parameter when component mounts
+  useEffect(() => {
+    if (allTransactions) {
+      try {
+        const parsedData = JSON.parse(allTransactions);
+        setAllTransactionsData(parsedData);
+        
+        // Try to find the current transaction in the parsed data
+        const currentTransaction = parsedData.find(
+          (transaction) => transaction.id.toString() === id.toString()
+        );
+        
+        // If found, set it directly and skip API call
+        if (currentTransaction) {
+          console.log("Found transaction in history data");
+          setTransactionData(currentTransaction);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error parsing transaction history data:", error);
+      }
+    }
+  }, [allTransactions, id]);
+
   const refreshData = useCallback(() => {
+    // Skip API call if we already have the data from allTransactions
+    if (transactionData && !isLoading) {
+      return;
+    }
+    
     if (token) {
       setIsLoading(true);
       getTransactionById(id, token)
@@ -53,10 +85,54 @@ function TransactionView() {
       );
       router.replace("/login");
     }
-  }, [id, token]);
+  }, [id, token, transactionData, isLoading]);
 
   useFocusEffect(refreshData);
-  console.log(JSON.stringify(transactionData, null, 2))
+  
+  // Helper function to find a related transaction by type (previous or next)
+  const findRelatedTransaction = (type) => {
+    if (!allTransactionsData.length || !transactionData) return null;
+    
+    // Sort transactions by date (newest first)
+    const sortedTransactions = [...allTransactionsData].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+    
+    // Find current transaction index
+    const currentIndex = sortedTransactions.findIndex(
+      t => t.id.toString() === transactionData.id.toString()
+    );
+    
+    if (currentIndex === -1) return null;
+    
+    // Return previous or next transaction based on type
+    if (type === 'previous' && currentIndex < sortedTransactions.length - 1) {
+      return sortedTransactions[currentIndex + 1];
+    } else if (type === 'next' && currentIndex > 0) {
+      return sortedTransactions[currentIndex - 1];
+    }
+    
+    return null;
+  };
+  
+  // Navigate to previous or next transaction
+  const navigateToTransaction = (type) => {
+    const transaction = findRelatedTransaction(type);
+    if (transaction) {
+      router.push({
+        pathname: "transactionView",
+        params: { 
+          id: transaction.id,
+          allTransactions: allTransactions // Pass the history data again
+        },
+      });
+    } else {
+      Alert.alert("No more transactions", `No ${type} transaction available.`);
+    }
+  };
+
+  console.log(JSON.stringify(transactionData, null, 2));
+  
   return (
     <>
       {/* Header */}
@@ -89,6 +165,29 @@ function TransactionView() {
             <Icon3 name="arrow-left" size={18} color={theme.color} />
             <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
           </TouchableOpacity>
+          
+          {/* Add navigation buttons if we have allTransactionsData
+          {allTransactionsData.length > 0 && (
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                onPress={() => navigateToTransaction('previous')}
+                style={{
+                  padding: 8,
+                  marginRight: 10,
+                }}
+              >
+                <Icon3 name="chevron-left" size={18} color={findRelatedTransaction('previous') ? theme.color : "#aaa"} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigateToTransaction('next')}
+                style={{
+                  padding: 8,
+                }}
+              >
+                <Icon3 name="chevron-right" size={18} color={findRelatedTransaction('next') ? theme.color : "#aaa"} />
+              </TouchableOpacity>
+            </View>
+          )} */}
         </View>
       </View>
 
@@ -174,14 +273,14 @@ function TransactionView() {
                 </Text>
               </View>
 
-              <View style={styles.detailRow}>
+              {/* <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>
                   Created By
                 </Text>
                 <Text style={[styles.detailValue, { color: theme.color }]}>
                   {transactionData.user?.name || "Unknown User"}
                 </Text>
-              </View>
+              </View> */}
 
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>

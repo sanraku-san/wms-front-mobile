@@ -6,23 +6,30 @@ import {
   TouchableOpacity,
   ImageBackground,
   StatusBar,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import React, { useContext } from "react";
+import React, { useCallback, useContext } from "react";
 import { themeContext } from "../../theme/themeContext";
-import { useDispatch, useSelector } from "react-redux"; // Import useDispatch and useSelector
-import { logout as logoutAction } from "../../../redux/slice"; // Import your logout action
-import { logout as logoutAPI } from "../../api/auth"; // Import your API logout function
-import { router } from "expo-router"; // Import useRouter for navigation
+import { useDispatch, useSelector } from "react-redux";
+import { logout as logoutAction } from "../../../redux/slice";
+import { logout as logoutAPI } from "../../api/auth";
+import { router, useFocusEffect } from "expo-router";
 import { ScrollView } from "react-native-gesture-handler";
+import { selectAuth } from "@/redux/slice";
+import { useState } from "react";
+
+import { getProfile } from "@/app/api/accounts";
+import { URL } from "../../api/configuration";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
+  const [userProfile, setUserProfile] = useState([]);
   const theme = useContext(themeContext);
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token); // Get the token from Redux
+  const { token } = useSelector(selectAuth);
 
   const handleLogout = async () => {
     try {
@@ -39,6 +46,47 @@ export default function Profile() {
       console.error("Error during logout:", error);
       // Optionally, show an error message
     }
+  };
+
+  const refreshData = useCallback(() => {
+    if (token) {
+      getProfile(token)
+        .then((res) => {
+          if (res && res.data) {
+            setUserProfile(res.data);
+            console.log("Res:", res.data);
+            console.log("User Profile:", userProfile);
+          } else {
+            console.error("Error fetching users:", res);
+            Alert.alert("Error", "Failed to fetch users.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching users:", error);
+          Alert.alert("Error", "Something went wrong while fetching users.");
+        });
+    } else {
+      console.warn("Authentication token not found. Cannot fetch users.");
+      Alert.alert("Authentication Required", "Please log in to view users.");
+      router.replace("/login");
+    }
+  }, [token]);
+
+  useFocusEffect(refreshData);
+
+  // Get profile image source
+  const getProfileImageSource = () => {
+    // Check if profile has an image property
+    if (userProfile.profile?.image) {
+      // Handle URLs vs relative paths like the inventory component
+      if (userProfile.profile.image.startsWith('http')) {
+        return { uri: userProfile.profile.image };
+      } else {
+        return { uri: `${URL}/${userProfile.profile.image}` };
+      }
+    }
+    // Fall back to default image if no image is available
+    return require("@/assets/images/profile.jpg");
   };
 
   return (
@@ -64,17 +112,22 @@ export default function Profile() {
               imageStyle={{ opacity: 0.2 }}
             >
               <Image
-                source={require("@/assets/images/profile.jpg")}
+                source={getProfileImageSource()}
                 style={{
                   width: 150,
                   height: 150,
                   borderRadius: 500,
                   margin: 10,
-                  shadowColor: "#fff",
-                  shadowOpacity: 1,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowRadius: 500,
-                  elevation: 5,
+                  // shadowColor: "#fff",
+                  // shadowOpacity: 1,
+                  // shadowOffset: { width: 0, height: 0 },
+                  // shadowRadius: 500,
+                  // elevation: 5,
+                }}
+                // Add error handling to fall back to default image if the URL fails to load
+                onError={(e) => {
+                  console.log("Profile image failed to load:", e.nativeEvent.error);
+                  // The Image component will automatically try the default source if the URI fails
                 }}
               />
               <Text
@@ -86,44 +139,9 @@ export default function Profile() {
                   color: "#fff",
                 }}
               >
-                Employee Name
+                {userProfile.profile?.first_name} {userProfile.profile?.last_name}
               </Text>
             </ImageBackground>
-          </View>
-
-          {/* edit button */}
-          <View style={styles.edit}>
-            <View
-              style={{
-                backgroundColor: theme.button.profileButtonBg,
-                borderRadius: 10,
-                padding: 10,
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  flexDirection: "row",
-                  gap: 8,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icon
-                  name="account-edit"
-                  size={20}
-                  color={theme.button.profileIcon}
-                />
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "bold",
-                    color: theme.button.profileIcon,
-                  }}
-                >
-                  EDIT PROFILE
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           {/* other info */}
@@ -143,7 +161,7 @@ export default function Profile() {
               </View>
               <View style={styles.infoTextView}>
                 <Text style={[styles.infoText, { color: theme.color }]}>
-                  employeeusername
+                {userProfile.username}
                 </Text>
               </View>
             </View>
@@ -162,7 +180,7 @@ export default function Profile() {
               </View>
               <View style={styles.infoTextView}>
                 <Text style={[styles.infoText, { color: theme.color }]}>
-                  admin@email.com
+                {userProfile.email}
                 </Text>
               </View>
             </View>
@@ -181,51 +199,50 @@ export default function Profile() {
               </View>
               <View style={styles.infoTextView}>
                 <Text style={[styles.infoText, { color: theme.color }]}>
-                  +63 999-999-9999
+                {userProfile.profile?.contact_number}
                 </Text>
               </View>
             </View>
           </View>
-
-         
-        
-        
-          
         </View>
-         {/* logout */}
-         <View
+        {/* logout */}
+        <View
+          style={{
+            alignContent: "center",
+            justifyContent: "center",
+            width: "95%",
+            marginBottom: 20,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleLogout}
             style={{
-              alignContent: "center",
+              // flexDirection: "row",
+              alignItems: "center",
               justifyContent: "center",
-              width: "95%",
-              marginBottom: 20,
+              gap: 10,
+              backgroundColor: "#E0DEDE",
+              borderRadius: 20,
+              padding: 15,
+              margin: 10,
+              width: "100%",
             }}
           >
-            <TouchableOpacity
-              onPress={handleLogout}
+            <View
               style={{
-                // flexDirection: "row",
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                backgroundColor: "#E0DEDE",
-                borderRadius: 20,
-                padding: 15,
-                margin: 10,
                 width: "100%",
+                justifyContent: "center",
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", width: "100%", justifyContent: "center" }}>
-                <Icon name="exit-to-app" size={20} color="#C90076" />
-                <Text
-                  style={{ fontSize: 20, color: "#C90076", marginLeft: 10 }}
-                >
-                  Logout
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
+              <Icon name="exit-to-app" size={20} color="#C90076" />
+              <Text style={{ fontSize: 20, color: "#C90076", marginLeft: 10 }}>
+                Logout
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
