@@ -134,7 +134,7 @@ function AccountView() {
                 padding: 5,
               }}
             >
-              <Icon3 name="account-edit" size={18} color="gray" />
+              <Icon3 name="account-edit" size={18} color={theme.button.edit} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDelete(id)}
@@ -146,7 +146,7 @@ function AccountView() {
                 padding: 5,
               }}
             >
-              <Icon2 name="trash-sharp" size={18} color="gray" />
+              <Icon2 name="trash-sharp" size={18} color={theme.button.delete} />
             </TouchableOpacity>
           </View>
         </View>

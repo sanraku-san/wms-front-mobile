@@ -1,29 +1,37 @@
-//this is for the fetching for the products
 import { URL } from "./configuration";
 
 export const getProducts = async (token) => {
-
   const res = await fetch(`${URL}/products`, {
     method: "GET",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-      
     },
   });
   return res.json();
 };
 
 export const createProduct = async (token, data) => {
+  // Check if data is FormData (for image uploads)
+  const isFormData = data instanceof FormData;
+  
+  // Set up headers based on content type
+  const headers = {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+  
+  // Only add Content-Type for JSON requests
+  // FormData sets its own multipart/form-data Content-Type with boundary
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+  
   const res = await fetch(`${URL}/products`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
+    headers: headers,
+    body: isFormData ? data : JSON.stringify(data),
   });
   return res.json();
 };

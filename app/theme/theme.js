@@ -42,12 +42,13 @@ export const theme = {
       buttonText: "#26354e",
       backgroundColor: "#c4d0e3",
       color: "#26354e",
-      transaction: "red",
+      transaction: "#e7000b",
       profileIcon: "#929aa6",
       profileButtonBg: "#26354e",
       profileText: "#26354e",
-      edit: "#15d52d",
-      delete: "#e50000",
+      edit: "#4f39f6",
+      delete: "#e7000b",
+      bg: "white"
     },
     header: {
       backgroundColor: "#c4d0e3",
@@ -85,6 +86,9 @@ export const theme = {
       accContact: "#26354e",
       contact: "#26354e",
     },
+    text: {
+      price: "#4f39f6",
+    }
   },
   // ---------- DARK THEME ----------
   dark: {
@@ -94,7 +98,7 @@ export const theme = {
     background: "#131a27",
     pageBackground: "#2a303c",
     indexpageBackground: "#2a303c",
-    imageBackground: "#161f2e",
+    imageBackground: "#272e50",
     fabBackground: "#66BB6A",
     fabIcon: "#fcfcfc",
     inventory: {
@@ -133,8 +137,9 @@ export const theme = {
       profileIcon: "#fcfcfc",
       profileButtonBg: "#131a27",
       profileText: "#fcfcfc",
-      edit: "#15d52d",
-      delete: "#e50000",
+      edit: "#5C6BC0",
+      delete: "#E57373",
+      bg: "#272e50"
     },
     header: {
       backgroundColor: "#131a27",
@@ -172,5 +177,8 @@ export const theme = {
       accContact: "#fcfcfc",
       contact: "#fcfcfc",
     },
+    text: {
+      price: "#5C6BC0",
+    }
   },
 };

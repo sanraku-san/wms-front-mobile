@@ -39,18 +39,24 @@ function TransactionView() {
         })
         .catch((error) => {
           console.error("Error fetching transaction:", error);
-          Alert.alert("Error", "Something went wrong while fetching transaction details.");
+          Alert.alert(
+            "Error",
+            "Something went wrong while fetching transaction details."
+          );
           setIsLoading(false);
         });
     } else {
       console.warn("Authentication token not found.");
-      Alert.alert("Authentication Required", "Please log in to view transaction details.");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to view transaction details."
+      );
       router.replace("/login");
     }
   }, [id, token]);
 
   useFocusEffect(refreshData);
-
+  console.log(JSON.stringify(transactionData, null, 2))
   return (
     <>
       {/* Header */}
@@ -111,7 +117,7 @@ function TransactionView() {
                   backgroundColor:
                     transactionData.transaction_type_id === 1
                       ? "#e7f3db"
-                      : "#f9e5f1",
+                      : "#fdf2f8",
                   padding: 15,
                   borderRadius: 10,
                   width: "100%",
@@ -128,14 +134,17 @@ function TransactionView() {
                     textAlign: "center",
                   }}
                 >
-                  {transactionData.transaction_type_id === 1 ? "Inbound" : "Outbound"} Transaction
+                  {transactionData.transaction_type_id === 1
+                    ? "Inbound"
+                    : "Outbound"}{" "}
+                  Transaction
                 </Text>
                 <Text style={{ textAlign: "center", color: "#666" }}>
                   Transaction #{transactionData.id}
                 </Text>
               </View>
             </View>
-            
+
             {/* Transaction Details */}
             <View
               style={[
@@ -149,21 +158,10 @@ function TransactionView() {
 
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>
-                  Products
+                  Store
                 </Text>
                 <Text style={[styles.detailValue, { color: theme.color }]}>
-                  {transactionData.products && transactionData.products.length > 0
-                    ? transactionData.products[0].name
-                    : "N/A"}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.color }]}>
-                  Store ID
-                </Text>
-                <Text style={[styles.detailValue, { color: theme.color }]}>
-                  {transactionData.store_id || "N/A"}
+                  {transactionData.store?.name || "Unknown Store"}
                 </Text>
               </View>
 
@@ -178,13 +176,13 @@ function TransactionView() {
 
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>
-                  User ID
+                  Created By
                 </Text>
                 <Text style={[styles.detailValue, { color: theme.color }]}>
-                  {transactionData.user_id || "N/A"}
+                  {transactionData.user?.name || "Unknown User"}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>
                   Date
@@ -196,61 +194,83 @@ function TransactionView() {
             </View>
 
             {/* Product Details Section */}
-            {transactionData.products && transactionData.products.length > 0 && (
-              <View
-                style={[
-                  styles.detailsCard,
-                  { backgroundColor: theme.card?.backgroundColor || "#f5f5f5" },
-                ]}
-              >
-                <Text style={[styles.sectionTitle, { color: theme.color }]}>
-                  PRODUCT DETAILS
-                </Text>
-                
-                {transactionData.products.map((product, index) => (
-                  <View key={index} style={styles.productCard}>
-                    <Text style={[styles.productTitle, { color: theme.color }]}>
-                      {product.name}
-                    </Text>
-                    
-                    <View style={styles.detailRow}>
-                      <Text style={[styles.detailLabel, { color: theme.color }]}>
-                        Barcode
+            {transactionData.products &&
+              transactionData.products.length > 0 && (
+                <View
+                  style={[
+                    styles.detailsCard,
+                    {
+                      backgroundColor: theme.card?.backgroundColor || "#f5f5f5",
+                    },
+                  ]}
+                >
+                  <Text style={[styles.sectionTitle, { color: theme.color }]}>
+                    PRODUCT DETAILS
+                  </Text>
+
+                  {transactionData.products.map((product, index) => (
+                    <View key={index} style={styles.productCard}>
+                      <Text
+                        style={[styles.productTitle, { color: theme.color }]}
+                      >
+                        {product.name}
                       </Text>
-                      <Text style={[styles.detailValue, { color: theme.color }]}>
-                        {product.barcode}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.detailRow}>
-                      <Text style={[styles.detailLabel, { color: theme.color }]}>
-                        Price
-                      </Text>
-                      <Text style={[styles.detailValue, { color: theme.color }]}>
-                        ₱ {product.price}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.detailRow}>
-                      <Text style={[styles.detailLabel, { color: theme.color }]}>
-                        Quantity
-                      </Text>
-                      <Text style={[styles.detailValue, { color: theme.color }]}>
-                        {product.pivot?.quantity || 1}
-                      </Text>
-                    </View>
-                    
-                    {product.description && (
-                      <View style={styles.descriptionBox}>
-                        <Text style={[styles.descriptionText, { color: theme.color }]}>
-                          {product.description}
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[styles.detailLabel, { color: theme.color }]}
+                        >
+                          Barcode
+                        </Text>
+                        <Text
+                          style={[styles.detailValue, { color: theme.color }]}
+                        >
+                          {product.barcode || "N/A"}
                         </Text>
                       </View>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[styles.detailLabel, { color: theme.color }]}
+                        >
+                          Price
+                        </Text>
+                        <Text
+                          style={[styles.detailValue, { color: theme.color }]}
+                        >
+                          ₱ {product.price}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[styles.detailLabel, { color: theme.color }]}
+                        >
+                          Quantity
+                        </Text>
+                        <Text
+                          style={[styles.detailValue, { color: theme.color }]}
+                        >
+                          {Math.floor(product.pivot?.quantity) || 1}
+                        </Text>
+                      </View>
+
+                      {product.description && (
+                        <View style={styles.descriptionBox}>
+                          <Text
+                            style={[
+                              styles.descriptionText,
+                              { color: "black" },
+                            ]}
+                          >
+                            {product.description}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
           </>
         )}
       </ScrollView>
@@ -275,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     marginVertical: 10,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   detailsCard: {
     margin: 20,
@@ -326,7 +346,7 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 14,
     fontStyle: "italic",
-  }
+  },
 });
 
 export default TransactionView;

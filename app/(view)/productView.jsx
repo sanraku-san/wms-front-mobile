@@ -6,7 +6,7 @@ import {
   Alert,
   Image,
 } from "react-native";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
@@ -17,6 +17,8 @@ import { getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
+import FA from "react-native-vector-icons/FontAwesome6";
+import { BASE_URL } from "../api/configuration";
 
 function ProductView() {
   const [refresh, setRefresh] = useState(false);
@@ -27,34 +29,61 @@ function ProductView() {
     price: "",
     barcode: "",
     category_id: null,
+    stock: "",
+    image: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
-  const refreshData = useCallback(() => {
-    if (token) {
-      // Ensure you have a token before making the API call
-      getProductById(id, token) // Pass the token here
-        .then((res) => {
-          if (res && res.data) {
-            setProductData(res.data);
-          } else {
-            console.error("Error fetching products:", res);
-            Alert.alert("Error", "Failed to fetch products.");
+  // Improved data refreshing function with proper image handling
+ // Improved data refreshing function with proper image handling
+const refreshData = useCallback(() => {
+  if (token) {
+    setIsLoading(true);
+    getProductById(id, token)
+      .then((res) => {
+        if (res && res.data) {
+          console.log("Product detail data received:", res.data);
+          
+          // Process the image URL similar to the inventory page
+          let processedData = {...res.data};
+          
+          // Validate and ensure image URL is properly formatted
+          if (processedData.image) {
+            console.log(`Original image path: ${processedData.image}`);
+            
+            // Also handle relative paths (similar to inventory page)
+            if (!processedData.image.startsWith('http')) {
+              processedData.image = `${BASE_URL}/${processedData.image.replace(/^\//, '')}`;
+              console.log(`Converted to absolute URL: ${processedData.image}`);
+            }
           }
-        })
-        .catch((error) => {
-          console.error("Error fetching products:", error);
-          Alert.alert("Error", "Something went wrong while fetching products.");
-        });
-    } else {
-      console.warn("Authentication token not found. Cannot fetch products.");
-      Alert.alert("Authentication Required", "Please log in to view products.");
-      // Optionally, redirect the user to the login screen
-      router.replace("/login");
-    }
-  }, [id, token]); // Add token to the dependency array of useCallback
+          
+          // Log the final image URL for debugging
+          if (processedData.image) {
+            console.log(`Final image URL for ${processedData.name}: ${processedData.image}`);
+          }
+          
+          setProductData(processedData);
+        } else {
+          console.error("Error fetching product details:", res);
+          Alert.alert("Error", "Failed to fetch product details.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching product details:", error);
+        Alert.alert("Error", "Something went wrong while fetching product details.");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  } else {
+    console.warn("Authentication token not found. Cannot fetch product details.");
+    Alert.alert("Authentication Required", "Please log in to view product details.");
+    router.replace("/login");
+  }
+}, [id, token]);
 
   useFocusEffect(refreshData);
 
@@ -76,11 +105,11 @@ function ProductView() {
                 if (res) {
                   Alert.alert("Product deleted successfully");
                   router.push("inventory");
-              } else {
-                Alert.alert("Failed to delete product");
-              }
+                } else {
+                  Alert.alert("Failed to delete product");
+                }
               })
-              .catch(() => {
+              .catch((error) => {
                 console.error("Delete error:", error);
                 Alert.alert("Something went wrong while deleting the product");
               });
@@ -132,11 +161,18 @@ function ProductView() {
                 border: 3,
                 borderColor: "black",
                 borderRadius: 5,
-                backgroundColor: "#DDD",
+                backgroundColor: theme.button.bg,
                 padding: 5,
+                alignItems: "center",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+                width: 30,
               }}
             >
-              <Icon3 name="store-edit" size={18} color="gray" />
+              <FA name="edit" size={18} color={theme.button.edit} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDelete(id)}
@@ -144,11 +180,18 @@ function ProductView() {
                 border: 3,
                 borderColor: "black",
                 borderRadius: 5,
-                backgroundColor: "#DDD",
+                backgroundColor: theme.button.bg,
                 padding: 5,
+                alignItems: "center",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+                width: 30,
               }}
             >
-              <Icon2 name="trash-sharp" size={18} color="gray" />
+              <FA name="trash" size={18} color={theme.button.delete} />
             </TouchableOpacity>
           </View>
         </View>
@@ -164,31 +207,31 @@ function ProductView() {
             padding: 10,
             width: "100%",
             marginTop: 20,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
           }}
         >
           <Image
-            source={require("@/assets/images/box.jpg")}
+            source={
+              productData.image 
+              ? { uri: productData.image } 
+              : require("../../assets/images/box.jpg")
+            }
             style={{ width: "85%", height: 300, borderRadius: 8, margin: 10 }}
-          />
-          <View
-            style={{
-              width: "85%",
-              padding: 10,
-              alignItems: "center",
-              backgroundColor: "#c4d0e3",
-              borderRadius: 10,
+            onError={(e) => {
+              console.log("Image failed to load:", e.nativeEvent.error);
+              // The Image component will automatically use the default source if the URI fails
             }}
-          >
-            {/* <Barcode
-              value={productData.barcode || "123456789012"}
-              options={{
-                format: "CODE128",
-                height: 30,
-                width: 2.5,
-                fontSize: 15,
-              }}
-            /> */}
-          </View>
+          />
+          {/* For debugging purposes
+          {__DEV__ && productData.image && (
+            <Text style={{fontSize: 10, color: theme.text.secondary, textAlign: 'center', padding: 5}}>
+              Image URL: {productData.image}
+            </Text>
+          )} */}
         </View>
         <View
           style={{
@@ -196,8 +239,9 @@ function ProductView() {
             alignItems: "flex-start",
             padding: 20,
             width: "100%",
-            // backgroundColor: theme.viewCard,
             gap: 10,
+            marginLeft: 30,
+            marginTop: 30
           }}
         >
           <Text
@@ -205,30 +249,38 @@ function ProductView() {
           >
             {productData.name}
           </Text>
+          <Text
+            style={{
+              fontSize: 30,
+              color: theme.text.price,
+              fontWeight: "bold",
+            }}
+          >
+            ₱ {productData.price}
+          </Text>
           <View
             style={{
-              flexDirection: "row",
+              flexDirection: "column",
               justifyContent: "space-between",
               width: "100%",
             }}
           >
-            <View style={{ flexDirection: "column", gap: 10 }}>
+            <View style={{ flexDirection: "column", gap: 10, marginTop: 10 }}>
               <Text style={{ color: theme.color }}>Category</Text>
-              {/*howww?? di makita ang category name*/}
               <Text style={{ fontSize: 20, color: theme.color }}>
                 {productData.category?.name}
               </Text>
             </View>
-            <View style={{ flexDirection: "column", gap: 10 }}>
-              <Text style={{ color: theme.color }}>Price</Text>
+            <View style={{ flexDirection: "column", gap: 10, marginTop: 10 }}>
+              <Text style={{ color: theme.color }}>Stock Quantity</Text>
               <Text style={{ fontSize: 20, color: theme.color }}>
-                ₱ {productData.price}
+                {productData.stock}
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={{ padding: 20, width: "100%", margin: 10, gap: 10 }}>
+        <View style={{ padding: 20, width: "100%", margin: 10, gap: 10, marginLeft: 30 }}>
           <Text
             style={{ fontSize: 18, color: theme.color, fontWeight: "bold" }}
           >

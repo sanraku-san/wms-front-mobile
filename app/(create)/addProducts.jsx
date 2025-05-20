@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Pressable
+  Pressable,
+  Image,
+  ScrollView,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { createProduct } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
@@ -31,67 +34,122 @@ export default function AddProducts() {
     price: "",
     barcode: "",
     category_id: null,
+    stock: "",
   });
+  const [selectedImage, setSelectedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
-  const handleAdd = useCallback(() => {
+  const pickImage = async () => {
+    // Request permissions
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Required", "Please grant camera roll permissions to upload images");
+      return;
+    }
+
+    // Launch image picker
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }
+  };
+
+  const handleAdd = useCallback(async () => {
     if (
       !productData.name ||
       !productData.description ||
       !productData.price ||
       !productData.barcode ||
-      !productData.category_id
+      !productData.category_id ||
+      !selectedImage
     ) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert("Error", "Please fill in all fields and select an image");
       return;
     }
+    
     setIsLoading(true);
-    console.log("Submitting product data:", productData);
-
-    if (token) {
-      createProduct(token, productData)
-        .then((res) => {
-          setIsLoading(false);
-          if (res) {
-            Alert.alert("Success", "Transaction added successfully");
-            // clear form
-            setProductData({
-              name: "",
-              description: "",
-              price: "",
-              barcode: "",
-              category_id: null,
-            });
-          }
-        })
-        .catch((error) => {
-          setIsLoading(false);
-          console.error("Product creation error:", error);
+    
+    try {
+      // Create FormData for multipart/form-data request
+      const formData = new FormData();
+      
+      // Add product data
+      Object.keys(productData).forEach(key => {
+        formData.append(key, productData[key]);
+      });
+      
+      // Add image
+      const imageUri = selectedImage.uri;
+      const filename = imageUri.split('/').pop();
+      // Get file extension
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      
+      formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type,
+      });
+      
+      if (token) {
+        const res = await createProduct(token, formData);
+        
+        setIsLoading(false);
+        
+        if (res && !res.error) {
+          Alert.alert("Success", "Product added successfully");
+          // clear form
+          setProductData({
+            name: "",
+            description: "",
+            price: "",
+            barcode: "",
+            category_id: null,
+            stock: "",
+          });
+          setSelectedImage(null);
+          router.push("/(drawer)/inventory");
+        } else {
           Alert.alert(
             "Error",
-            error.message || "Something went wrong with creating the product"
+            res.message || "Failed to add product"
           );
-        });
-      router.push("/(drawer)/inventory")
-    } else {
+        }
+      } else {
+        setIsLoading(false);
+        Alert.alert(
+          "Authentication Required",
+          "Please log in to create a product"
+        );
+        router.replace("/");
+      }
+    } catch (error) {
       setIsLoading(false);
-      console.warn("Authentication token not found");
+      console.error("Product creation error:", error);
       Alert.alert(
-        "Authentication Required",
-        "Please log in to create a product"
+        "Error",
+        error.message || "Something went wrong with creating the product"
       );
-      router.replace("/");
     }
-  }, [token, productData]);
+  }, [token, productData, selectedImage]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.pageBackground }]}>
       <View style={styles.main}>
-        {/* <Pressable onPress={router.push(Inventory)}><Text>BACK</Text></Pressable> */}
+        <Text style={[styles.title, { color: theme.button.profileText }]}>
+          Add New Product
+        </Text>
+        
         <Text style={[styles.label, { color: theme.button.profileText }]}>
-          NAME OF PRODUCT:
+          Product Name:
         </Text>
         <TextInput
           style={styles.input}
@@ -102,20 +160,9 @@ export default function AddProducts() {
             setProductData({ ...productData, name: text })
           }
         />
+        
         <Text style={[styles.label, { color: theme.button.profileText }]}>
-          DESCRIPTION:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Description"
-          placeholderTextColor="#FFF"
-          value={productData.description}
-          onChangeText={(text) =>
-            setProductData({ ...productData, description: text })
-          }
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          PRODUCT PRICE:
+          Price:
         </Text>
         <TextInput
           style={styles.input}
@@ -125,9 +172,11 @@ export default function AddProducts() {
           onChangeText={(text) =>
             setProductData({ ...productData, price: text })
           }
+          keyboardType="numeric"
         />
+        
         <Text style={[styles.label, { color: theme.button.profileText }]}>
-          BARCODE:
+          Barcode:
         </Text>
         <TextInput
           style={styles.input}
@@ -138,8 +187,9 @@ export default function AddProducts() {
             setProductData({ ...productData, barcode: text })
           }
         />
+        
         <Text style={[styles.label, { color: theme.button.profileText }]}>
-          CATEGORY:
+          Category:
         </Text>
         <Dropdown
           style={styles.input}
@@ -148,12 +198,62 @@ export default function AddProducts() {
           valueField="value"
           placeholder="Select Category"
           placeholderStyle={{ color: "#FFF" }}
+          selectedTextStyle={{ color: "#000" }}
           value={productData.category_id}
           onChange={(item) =>
             setProductData({ ...productData, category_id: item.value })
           }
         />
+        
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          Stock Quantity:
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Stock Quantity"
+          placeholderTextColor="#FFF"
+          value={productData.stock}
+          onChangeText={(text) =>
+            setProductData({ ...productData, stock: text })
+          }
+          keyboardType="numeric"
+        />
+        
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          Description:
+        </Text>
+        <TextInput
+          style={[styles.input, styles.descriptionInput]}
+          placeholder="Description"
+          placeholderTextColor="#FFF"
+          value={productData.description}
+          onChangeText={(text) =>
+            setProductData({ ...productData, description: text })
+          }
+          multiline={true}
+          numberOfLines={4}
+        />
+        
+        {/* Image Selection */}
+        <Text style={[styles.label, { color: theme.button.profileText }]}>
+          Product Image:
+        </Text>
+        <TouchableOpacity 
+          style={styles.imagePickerButton} 
+          onPress={pickImage}
+        >
+          <Text style={styles.imagePickerText}>
+            {selectedImage ? "Change Image" : "Select an Image"}
+          </Text>
+        </TouchableOpacity>
+        
+        {selectedImage && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+          </View>
+        )}
       </View>
+      
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
         onPress={handleAdd}
@@ -169,27 +269,31 @@ export default function AddProducts() {
           </Text>
         )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 30,
-    padding: 10,
-    flexDirection: "column",
+    padding: 16,
   },
   main: {
     flex: 1,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
   },
   label: {
     fontWeight: "bold",
-    color: "white",
-    marginBottom: 3,
+    marginBottom: 5,
   },
   input: {
-    width: "98%",
+    width: "100%",
     height: 50,
     borderWidth: 1,
     borderRadius: 10,
@@ -197,20 +301,52 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "#Cbd5e1",
   },
+  descriptionInput: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  imagePickerButton: {
+    width: "100%",
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 10,
+    backgroundColor: "#Cbd5e1",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  imagePickerText: {
+    color: "#FFF",
+    fontWeight: "bold",
+  },
+  imagePreviewContainer: {
+    width: "100%",
+    height: 200,
+    marginBottom: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: "#Cbd5e1",
+    overflow: "hidden",
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
   button: {
-    backgroundColor: "#020817",
-    padding: 10,
-    width: "98%",
+    padding: 15,
+    width: "100%",
     height: 50,
     borderWidth: 1,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 30,
   },
   buttonText: {
-    color: "white",
     fontWeight: "bold",
   },
 });

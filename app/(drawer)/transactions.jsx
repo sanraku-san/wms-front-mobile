@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback } from "react";
+import React, { useContext, useState, useCallback, useEffect } from "react";
 import {
   TextInput,
   View,
@@ -16,6 +16,8 @@ import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
 import { useFocusEffect } from "expo-router";
+import { getStores } from "../api/stores";
+import { getProducts } from "../api/products";
 
 const transactionTypes = [
   { label: "Inbound", value: "1" },
@@ -34,16 +36,66 @@ export default function Transactions() {
     ]
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
+  const [stores, setStores] = useState([]);
+  const [products, setProducts] = useState([]);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
   
   // For dropdown state
   const [selectedTransactionType, setSelectedTransactionType] = useState(null);
+  const [selectedStore, setSelectedStore] = useState(null);
   
- const handleAdd = useCallback(() => { 
+  // Fetch stores and products when component mounts
+  useFocusEffect(
+    useCallback(() => {
+      setFetchingData(true);
+      
+      const fetchStoresAndProducts = async () => {
+        try {
+          // Fetch stores
+          const storesResponse = await getStores(token);
+          if (storesResponse && storesResponse.data) {
+            // Transform data for dropdown
+            const storeOptions = storesResponse.data.map(store => ({
+              label: store.name,
+              value: store.id.toString()
+            }));
+            setStores(storeOptions);
+          }
+          
+          // Fetch products
+          const productsResponse = await getProducts(token);
+          if (productsResponse && productsResponse.data) {
+            // Transform data for dropdown
+            const productOptions = productsResponse.data.map(product => ({
+              label: `${product.name} (${product.barcode || 'No barcode'})`,
+              value: product.id.toString()
+            }));
+            setProducts(productOptions);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          Alert.alert("Error", "Failed to fetch stores and products.");
+        } finally {
+          setFetchingData(false);
+        }
+      };
+      
+      if (token) {
+        fetchStoresAndProducts();
+      } else {
+        setFetchingData(false);
+        Alert.alert("Authentication Required", "Please log in to create transactions");
+        router.replace("/login");
+      }
+    }, [token])
+  );
+  
+  const handleAdd = useCallback(() => { 
     // Validate all fields are filled
     if (!transactionData.store_id || !transactionData.transaction_type_id) {
-      Alert.alert("Error", "Please fill in store ID and transaction type");
+      Alert.alert("Error", "Please select a store and transaction type");
       return;
     }
     
@@ -78,6 +130,7 @@ export default function Transactions() {
               ]
             });
             setSelectedTransactionType(null);
+            setSelectedStore(null);
             router.push("/transactionsHistory")
           }
         })
@@ -130,21 +183,44 @@ export default function Transactions() {
     });
   };
 
+  const renderDropdownItem = (item) => {
+    return (
+      <View style={styles.dropdownItem}>
+        <Text style={styles.dropdownItemText}>{item.label}</Text>
+      </View>
+    );
+  };
+
+  if (fetchingData) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.pageBackground }]}>
+        <ActivityIndicator size="large" color={theme.button.profileIcon} />
+        <Text style={{ color: theme.button.profileText, marginTop: 10 }}>Loading stores and products...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.pageBackground }]}>
       <View style={styles.main}>
         <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Store ID:
+          Store:
         </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Store ID"
-          placeholderTextColor="#888"
-          value={transactionData.store_id}
-          onChangeText={(text) =>
-            setTransactionData({ ...transactionData, store_id: text })
-          }
-          keyboardType="numeric"
+        <Dropdown
+          style={styles.dropdown}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          data={stores}
+          maxHeight={300}
+          labelField="label"
+          valueField="value"
+          placeholder="Select a store"
+          value={selectedStore}
+          onChange={item => {
+            setSelectedStore(item.value);
+            setTransactionData({ ...transactionData, store_id: item.value });
+          }}
+          renderItem={renderDropdownItem}
         />
         
         <Text style={[styles.label, { color: theme.button.profileText }]}>
@@ -164,6 +240,7 @@ export default function Transactions() {
             setSelectedTransactionType(item.value);
             setTransactionData({ ...transactionData, transaction_type_id: item.value });
           }}
+          renderItem={renderDropdownItem}
         />
         
         <Text style={[styles.title, { color: theme.button.profileText }]}>
@@ -187,15 +264,24 @@ export default function Transactions() {
             </View>
             
             <Text style={[styles.label, { color: theme.button.profileText }]}>
-              Product ID:
+              Product:
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Product ID"
-              placeholderTextColor="#888"
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              data={products}
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="Select a product"
               value={product.product_id}
-              onChangeText={(text) => updateProductField(index, "product_id", text)}
-              keyboardType="numeric"
+              onChange={item => {
+                updateProductField(index, "product_id", item.value);
+              }}
+              renderItem={renderDropdownItem}
+              search
+              searchPlaceholder="Search for a product"
             />
             
             <Text style={[styles.label, { color: theme.button.profileText }]}>
@@ -213,7 +299,7 @@ export default function Transactions() {
         ))}
         
         <TouchableOpacity
-          style={[styles.addProductButton, { backgroundColor: theme.button.profileBackground }]}
+          style={[styles.addProductButton, { backgroundColor: "green" }]}
           onPress={addProductField}
         >
           <Text style={[styles.addProductButtonText, { color: theme.button.profileText }]}>
@@ -244,6 +330,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 30,
     padding: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   main: {
     flex: 1,
@@ -277,6 +369,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
     backgroundColor: "#Cbd5e1",
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  dropdownItemText: {
+    fontSize: 16,
   },
   placeholderStyle: {
     fontSize: 16,

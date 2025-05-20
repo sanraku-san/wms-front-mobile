@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import React, { useCallback, useState, useContext, useEffect } from "react";
+import React, { useCallback, useState, useContext, useEffect, useRef, useMemo } from "react";
 import { useFocusEffect, router } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
@@ -38,18 +38,34 @@ function Stores() {
   const [storesdata, setStoresData] = useState([]);
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState("");
-  const [sortedBy, setSortedBy] = useState([]);
+  const [searchText, setSearchText] = useState("");
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
-  const handleAdd = () => {
+  // Add ref for TextInput to maintain focus
+  const searchInputRef = useRef(null);
+
+  // Enhanced search function with debouncing
+  const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const handleAdd = useCallback(() => {
     router.push("/(create)/addStore");
-  };
-  const pushToEdit = (id) => {
+  }, []);
+
+  const pushToEdit = useCallback((id) => {
     router.push({ pathname: "/(update)/editStore", params: { id } });
-  };
-  const handleDelete = (id) => {
+  }, []);
+
+  const handleDelete = useCallback((id) => {
     Alert.alert(
       "Confirm Delete",
       "Are you sure you want to delete this Store?",
@@ -76,64 +92,175 @@ function Stores() {
         },
       ]
     );
-  };
+  }, [token]);
 
   const refreshData = useCallback(() => {
-      if (token) { // Ensure you have a token before making the API call
-        getStores(token) // Pass the token here
-          .then((res) => {
-            if (res && res.data) {
-              setStoresData(res.data);
-            } else {
-              console.error("Error fetching products:", res);
-              Alert.alert("Error", "Failed to fetch products.");
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching products:", error);
-            Alert.alert("Error", "Something went wrong while fetching products.");
-          });
-      } else {
-        console.warn("Authentication token not found. Cannot fetch products.");
-        Alert.alert("Authentication Required", "Please log in to view products.");
-        // Optionally, redirect the user to the login screen
-        router.replace("/login");
-      }
-    }, [token]); // Add token to the dependency array of useCallback
-  
-    useFocusEffect(refreshData);
+    if (token) {
+      getStores(token)
+        .then((res) => {
+          if (res && res.data) {
+            setStoresData(res.data);
+          } else {
+            console.error("Error fetching stores:", res);
+            Alert.alert("Error", "Failed to fetch stores.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching stores:", error);
+          Alert.alert("Error", "Something went wrong while fetching stores.");
+        });
+    } else {
+      console.warn("Authentication token not found. Cannot fetch stores.");
+      Alert.alert("Authentication Required", "Please log in to view stores.");
+      router.replace("/login");
+    }
+  }, [token]);
 
-  useEffect(() => {
-    let forSort = [...storesdata];
+  useFocusEffect(refreshData);
 
-    if (sortBy) {
-      switch (sortBy) {
-        case 1: //name asc
-          forSort.sort((a, b) => a.name.localeCompare(b.name));
+  // Memoize filtered and sorted data to prevent unnecessary re-renders
+  const sortedBy = useMemo(() => {
+    let filteredData = [...storesdata];
+
+    // Apply search filtering first - enhanced search
+    if (debouncedSearchText) {
+      const searchLower = debouncedSearchText.toLowerCase().trim();
+      filteredData = filteredData.filter((item) => {
+        const searchableFields = [
+          item.name,
+          item.address,
+          item.contact_number,
+          // Add more fields if available
+          // item.description,
+          // item.email,
+          // item.id?.toString(),
+        ].filter(Boolean); // Remove null/undefined values
+
+        return searchableFields.some(field => 
+          field.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Apply category filtering (you can customize these filters based on your store categories)
+    if (filter) {
+      switch (filter) {
+        case 1: // All Stores
           break;
-        case 2: //name desc
-          forSort.sort((a, b) => b.name.localeCompare(a.name));
+        case 2: // ewan (customize this based on your actual filter categories)
+          // filteredData = filteredData.filter((item) => 
+          //   item.category?.toLowerCase() === "ewan"
+          // );
           break;
-        case 3: //address asc
-          forSort.sort((a, b) => a.address.localeCompare(b.address));
+        case 3: // etu
+          // filteredData = filteredData.filter((item) => 
+          //   item.category?.toLowerCase() === "etu"
+          // );
           break;
-        case 4: //address desc
-          forSort.sort((a, b) => b.address.localeCompare(a.address));
+        case 4: // etri
+          // filteredData = filteredData.filter((item) => 
+          //   item.category?.toLowerCase() === "etri"
+          // );
           break;
         default:
           break;
       }
     }
 
-    setSortedBy(forSort);
-  }, [storesdata, sortBy]);
+    // Apply sorting
+    if (sortBy) {
+      switch (sortBy) {
+        case 1: // name asc
+          filteredData.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 2: // name desc
+          filteredData.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 3: // address asc
+          filteredData.sort((a, b) => a.address.localeCompare(b.address));
+          break;
+        case 4: // address desc
+          filteredData.sort((a, b) => b.address.localeCompare(a.address));
+          break;
+        default:
+          break;
+      }
+    }
 
-  const renderDropdown = (item) => {
+    return filteredData;
+  }, [storesdata, sortBy, filter, debouncedSearchText]);
+
+  // Function to reset all filters and sorting
+  const resetFilters = useCallback(() => {
+    setSearchText("");
+    setFilter("");
+    setSortBy("");
+    // Keep focus on search input after reset
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+  }, []);
+
+  // Memoize the search input to prevent re-renders
+  const SearchInput = useMemo(() => (
+    <TextInput
+      ref={searchInputRef}
+      outlineColor="#c4d0e3"
+      activeOutlineColor="#fff"
+      style={{
+        margin: 15,
+        marginBottom: 5,
+        backgroundColor: theme.search.backgroundColor,
+      }}
+      mode="outlined"
+      placeholder="Search by name, address, contact..."
+      placeholderTextColor={theme.search.placeholderColor}
+      textColor={theme.search.color}
+      left={
+        <TextInput.Icon
+          icon={() => (
+            <Icon
+              name="search"
+              size={20}
+              color={theme.search.iconPlaceholderColor}
+            />
+          )}
+        />
+      }
+      right={
+        searchText ? (
+          <TextInput.Icon
+            icon={() => (
+              <Icon
+                name="times"
+                size={16}
+                color={theme.search.iconPlaceholderColor}
+              />
+            )}
+            onPress={() => {
+              setSearchText("");
+              searchInputRef.current?.focus();
+            }}
+          />
+        ) : null
+      }
+      value={searchText}
+      onChangeText={setSearchText}
+      theme={{ roundness: 4 }}
+      selectTextOnFocus={true}
+      blurOnSubmit={false}
+      autoCorrect={false}
+      autoCapitalize="none"
+      keyboardType="default"
+    />
+  ), [searchText, theme, setSearchText]);
+
+  const renderDropdown = useCallback((item) => {
     return (
       <View
         style={{
           padding: 10,
-          backgroundColor: theme.background, // Apply theme background
+          backgroundColor: theme.background,
         }}
       >
         <Text style={{ fontSize: 15, color: theme.dropdown.color }}>
@@ -141,152 +268,149 @@ function Stores() {
         </Text>
       </View>
     );
-  };
+  }, [theme]);
+
+  const renderItem = useCallback(({ item }) => (
+    <View style={styles.main}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.card.backgroundColor },
+        ]}
+      >
+        <View style={{ flexDirection: "row", flex: 1 }}>
+          <View style={styles.card2}>
+            <Text style={[styles.text, { color: theme.item.title }]}>
+              {item.name}
+            </Text>
+            <Text style={[styles.type1, { color: theme.item.address }]}>
+              {item.address}
+            </Text>
+            <Text style={[styles.type1, { color: theme.item.contact }]}>
+              {item.contact_number}
+            </Text>
+          </View>
+        </View>
+        <View style={{ gap: 10 }}>
+          <TouchableOpacity
+            onPress={() => pushToEdit(item.id)}
+            style={[
+              styles.btn,
+              { backgroundColor: theme.button.backgroundColor },
+            ]}
+          >
+            <Icon3
+              name="store-edit"
+              size={20}
+              color={theme.button.color}
+              backgroundColor={theme.button.backgroundColor}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleDelete(item.id)}
+            style={[
+              styles.btn,
+              { backgroundColor: theme.button.backgroundColor },
+            ]}
+          >
+            <Icon2
+              name="trash-sharp"
+              size={20}
+              color={theme.button.color}
+              backgroundColor={theme.button.backgroundColor}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  ), [theme, pushToEdit, handleDelete]);
+
+  const ListHeaderComponent = useMemo(() => (
+    <View>
+      <View>
+        {SearchInput}
+      </View>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          gap: 0,
+          marginHorizontal: 5,
+        }}
+      >
+        <View style={{ width: "50%", marginBottom: 20 }}>
+          <Dropdown
+            style={[
+              styles.dropdown,
+              { backgroundColor: theme.dropdown.backgroundColor },
+            ]}
+            data={forFilter}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Filter"
+            placeholderStyle={{ color: theme.dropdown.placeholderColor }}
+            value={filter}
+            onChange={(item) => setFilter(item.value)}
+            renderItem={renderDropdown}
+          />
+        </View>
+        <View style={{ width: "50%" }}>
+          <Dropdown
+            style={[
+              styles.dropdown,
+              { backgroundColor: theme.dropdown.backgroundColor },
+            ]}
+            data={forSortBy}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Sort By"
+            placeholderStyle={{ color: theme.dropdown.placeholderColor }}
+            value={sortBy}
+            onChange={(item) => setSortBy(item.value)}
+            renderItem={renderDropdown}
+          />
+        </View>
+      </View>
+    </View>
+  ), [SearchInput, filter, sortBy, theme, renderDropdown]);
+
+  const ListEmptyComponent = useMemo(() => (
+    <View style={styles.emptyContainer}>
+      <Icon name="search" size={50} color="#6B7280" style={{ marginBottom: 10 }} />
+      <Text style={[styles.emptyText, { color: theme.text?.secondary || "#666" }]}>
+        {searchText || filter || sortBy 
+          ? "No stores match your search criteria" 
+          : "No stores found"}
+      </Text>
+      {(searchText || filter || sortBy) && (
+        <TouchableOpacity onPress={resetFilters} style={styles.clearFiltersButton}>
+          <Text style={styles.clearFiltersText}>Clear all filters</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  ), [searchText, filter, sortBy, resetFilters, theme]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.pageBackground }}>
       <FlatList
-        ListHeaderComponent={() => (
-          <View>
-            <View>
-              <TextInput
-                outlineColor="#c4d0e3"
-                activeOutlineColor="#fff"
-                style={{
-                  margin: 15,
-                  marginBottom: 5,
-                  backgroundColor: theme.search.backgroundColor,
-                }}
-                mode="outlined"
-                placeholder="Search Store"
-                placeholderTextColor={theme.search.placeholderColor}
-                textColor={theme.search.color}
-                left={
-                  <TextInput.Icon
-                    icon={() => (
-                      <Icon
-                        name="search"
-                        size={20}
-                        color={theme.search.iconPlaceholderColor}
-                      />
-                    )}
-                  />
-                }
-                theme={{ roundness: 4 }}
-              />
-            </View>
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                gap: 0,
-                marginHorizontal: 5,
-              }}
-            >
-              <View style={{ width: "50%", marginBottom: 20 }}>
-                <Dropdown
-                  style={[
-                    styles.dropdown,
-                    { backgroundColor: theme.dropdown.backgroundColor },
-                  ]}
-                  data={forFilter}
-                  maxHeight={300}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Filter"
-                  placeholderStyle={{ color: theme.dropdown.placeholderColor }}
-                  value={filter}
-                  onChange={(item) => setFilter(item.value)}
-                  renderItem={renderDropdown}
-                />
-              </View>
-              <View style={{ width: "50%" }}>
-                <Dropdown
-                  style={[
-                    styles.dropdown,
-                    { backgroundColor: theme.dropdown.backgroundColor },
-                  ]}
-                  data={forSortBy}
-                  maxHeight={300}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Sort By"
-                  placeholderStyle={{ color: theme.dropdown.placeholderColor }}
-                  value={sortBy}
-                  onChange={(item) => setSortBy(item.value)}
-                  renderItem={renderDropdown}
-                />
-              </View>
-            </View>
-          </View>
-        )}
-        data={sortedBy.length > 0 ? sortedBy : storesdata}
+        ListHeaderComponent={ListHeaderComponent}
+        data={sortedBy}
         refreshControl={
           <RefreshControl refreshing={refresh} onRefresh={refreshData} />
         }
-        renderItem={({ item }) => (
-          <View style={styles.main}>
-            <View
-              style={[
-                styles.card,
-                { backgroundColor: theme.card.backgroundColor },
-              ]}
-            >
-              <View style={{ flexDirection: "row", flex: 1 }}>
-                <View style={styles.card2}>
-                  <Text style={[styles.text, { color: theme.item.title }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.type1, { color: theme.item.address }]}>
-                    {item.address}
-                  </Text>
-                  <Text style={[styles.type1, { color: theme.item.contact }]}>
-                    {item.contact_number}
-                  </Text>
-                </View>
-              </View>
-              <View style={{ gap: 10 }}>
-                <TouchableOpacity
-                  onPress={() => pushToEdit(item.id)}
-                  style={[
-                    styles.btn,
-                    { backgroundColor: theme.button.backgroundColor },
-                  ]}
-                >
-                  <Icon3
-                    name="store-edit"
-                    size={20}
-                    color={theme.button.color}
-                    backgroundColor={theme.button.backgroundColor}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleDelete(item.id)}
-                  style={[
-                    styles.btn,
-                    { backgroundColor: theme.button.backgroundColor },
-                  ]}
-                >
-                  <Icon2
-                    name="trash-sharp"
-                    size={20}
-                    color={theme.button.color}
-                    backgroundColor={theme.button.backgroundColor}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No stores found</Text>
-          </View>
-        )}
+        ListEmptyComponent={ListEmptyComponent}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 80 }}
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={true}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
       />
       <FAB
         style={[styles.fab, { backgroundColor: theme.fabBackground }]}
@@ -301,7 +425,7 @@ function Stores() {
 
 const styles = StyleSheet.create({
   main: {
-    padding: 10, // Changed paddingTop to padding for consistent spacing
+    padding: 10,
   },
   card: {
     flexDirection: "row",
@@ -315,11 +439,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    alignItems: "center", // Added to vertically align items
+    alignItems: "center",
   },
   card2: {
     padding: 2,
-    flex: 1, // Added to allow text to take up available space
+    flex: 1,
   },
   text: {
     fontSize: 20,
@@ -342,18 +466,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 40,
+    minHeight: 300,
   },
   emptyText: {
     fontSize: 16,
-    color: "#666",
+    textAlign: "center",
+    marginBottom: 10,
   },
   fab: {
     position: "absolute",
     right: 16,
     bottom: 16,
     zIndex: 1000,
-    backgroundColor: "#c4d0e3",
     borderRadius: 50,
   },
   btn: {
@@ -362,6 +487,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
     padding: 5,
+  },
+  clearFiltersButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#6B7280",
+    borderRadius: 5,
+  },
+  clearFiltersText: {
+    color: "white",
+    fontSize: 14,
   },
 });
 

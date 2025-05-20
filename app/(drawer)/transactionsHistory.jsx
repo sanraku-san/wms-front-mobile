@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Pressable,
 } from "react-native";
-import React, { useCallback, useState, useContext, useEffect } from "react";
+import React, { useCallback, useState, useContext, useEffect, useRef, useMemo } from "react";
 import { useFocusEffect, router } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
@@ -38,70 +38,204 @@ function TransactionsHistory() {
   const [historydata, setHistoryData] = useState([]);
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState(1);
-  const [sortedBy, setSortedBy] = useState([]);
+  const [searchText, setSearchText] = useState("");
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
+  // Add ref for TextInput to maintain focus
+  const searchInputRef = useRef(null);
+
+  // Enhanced search function with debouncing
+  const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   console.log("History Data:", historydata);
-  // const handleDelete = (id) => {
-  //   Alert.alert(
-  //     "Confirm Delete",
-  //     "Are you sure you want to delete this Transaction?",
-  //     [
-  //       {
-  //         text: "Cancel",
-  //         style: "cancel",
-  //       },
-  //       {
-  //         text: "Delete",
-  //         style: "destructive",
-  //         onPress: () => {
-  //           deleteTransaction(id)
-  //             .then((res) => {
-  //               if (res) {
-  //                 Alert.alert("Transaction deleted successfully");
-  //                 refreshData();
-  //               }
-  //             })
-  //             .catch(() => {
-  //               Alert.alert(
-  //                 "Something went wrong while deleting the Transaction"
-  //               );
-  //             });
-  //         },
-  //       },
-  //     ]
-  //   );
-  // };
 
   const refreshData = useCallback(() => {
     if (token) {
-      // Ensure you have a token before making the API call
-      getTransactions(token) // Pass the token here
+      getTransactions(token)
         .then((res) => {
           if (res && res.data) {
             setHistoryData(res.data);
           } else {
-            console.error("Error fetching products:", res);
-            Alert.alert("Error", "Failed to fetch products.");
+            console.error("Error fetching transactions:", res);
+            Alert.alert("Error", "Failed to fetch transactions.");
           }
         })
         .catch((error) => {
-          console.error("Error fetching products:", error);
-          Alert.alert("Error", "Something went wrong while fetching products.");
+          console.error("Error fetching transactions:", error);
+          Alert.alert("Error", "Something went wrong while fetching transactions.");
         });
     } else {
-      console.warn("Authentication token not found. Cannot fetch products.");
-      Alert.alert("Authentication Required", "Please log in to view products.");
-      // Optionally, redirect the user to the login screen
+      console.warn("Authentication token not found. Cannot fetch transactions.");
+      Alert.alert("Authentication Required", "Please log in to view transactions.");
       router.replace("");
     }
-  }, [token]); // Add token to the dependency array of useCallback
+  }, [token]);
 
   useFocusEffect(refreshData);
 
-  const renderDropdown = (item) => {
+  // Memoize filtered and sorted data to prevent unnecessary re-renders
+  const sortedBy = useMemo(() => {
+    let filteredData = [...historydata];
+
+    // Apply search filtering first - enhanced search
+    if (debouncedSearchText) {
+      const searchLower = debouncedSearchText.toLowerCase().trim();
+      filteredData = filteredData.filter((item) => {
+        const searchableFields = [
+          item.transaction_type?.name,
+          item.store?.name,
+          item.product?.name,
+          item.total_transaction_price?.toString(),
+          // Add any other searchable fields like description, notes, etc.
+          item.description,
+          item.notes,
+          // Search through products array if it exists
+          ...(item.products ? item.products.map(product => product.name) : []),
+        ].filter(Boolean); // Remove null/undefined values
+
+        return searchableFields.some(field => 
+          field.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Apply filtering
+    if (filter) {
+      switch (filter) {
+        case 1: // All Transactions
+          break;
+        case 2: // Incoming
+          filteredData = filteredData.filter(
+            (item) => item.transaction_type?.name?.toLowerCase() === "inbound"
+          );
+          break;
+        case 3: // Outgoing
+          filteredData = filteredData.filter(
+            (item) => item.transaction_type?.name?.toLowerCase() === "outbound"
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      switch (sortBy) {
+        case 1: // date desc (new first)
+          filteredData.sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+          break;
+        case 2: // date asc (old first)
+          filteredData.sort((a, b) => 
+            new Date(a.created_at) - new Date(b.created_at)
+          );
+          break;
+        case 3: // name asc
+          filteredData.sort((a, b) =>
+            (a.product?.name || "").localeCompare(b.product?.name || "")
+          );
+          break;
+        case 4: // name desc
+          filteredData.sort((a, b) =>
+            (b.product?.name || "").localeCompare(a.product?.name || "")
+          );
+          break;
+        case 5: // store asc
+          filteredData.sort((a, b) =>
+            (a.store?.name || "").localeCompare(b.store?.name || "")
+          );
+          break;
+        case 6: // store desc
+          filteredData.sort((a, b) =>
+            (b.store?.name || "").localeCompare(a.store?.name || "")
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    return filteredData;
+  }, [historydata, sortBy, filter, debouncedSearchText]);
+
+  // Function to reset all filters and sorting
+  const resetFilters = useCallback(() => {
+    setSearchText("");
+    setFilter("");
+    setSortBy(1); // Reset to default sort
+    // Keep focus on search input after reset
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+  }, []);
+
+  // Memoize the search input to prevent re-renders
+  const SearchInput = useMemo(() => (
+    <TextInput
+      ref={searchInputRef}
+      outlineColor="#c4d0e3"
+      activeOutlineColor="#fff"
+      style={{
+        margin: 15,
+        marginBottom: 5,
+        backgroundColor: theme.search.backgroundColor,
+      }}
+      mode="outlined"
+      placeholder="Search transactions, stores, products..."
+      placeholderTextColor={theme.search.placeholderColor}
+      textColor={theme.search.color}
+      left={
+        <TextInput.Icon
+          icon={() => (
+            <Icon
+              name="search"
+              size={20}
+              color={theme.search.iconPlaceholderColor}
+            />
+          )}
+        />
+      }
+      right={
+        searchText ? (
+          <TextInput.Icon
+            icon={() => (
+              <Icon
+                name="times"
+                size={16}
+                color={theme.search.iconPlaceholderColor}
+              />
+            )}
+            onPress={() => {
+              setSearchText("");
+              searchInputRef.current?.focus();
+            }}
+          />
+        ) : null
+      }
+      value={searchText}
+      onChangeText={setSearchText}
+      theme={{ roundness: 10 }}
+      selectTextOnFocus={true}
+      blurOnSubmit={false}
+      autoCorrect={false}
+      autoCapitalize="none"
+      keyboardType="default"
+    />
+  ), [searchText, theme, setSearchText]);
+
+  const renderDropdown = useCallback((item) => {
     return (
       <View
         style={{
@@ -114,281 +248,183 @@ function TransactionsHistory() {
         </Text>
       </View>
     );
-  };
+  }, [theme]);
 
-  useEffect(() => {
-    let filteredData = [...historydata];
-    if (filter) {
-      switch (filter) {
-        case 1: // All Items
-          // No filtering needed
-          break;
-        case 2: // Incoming
-          filteredData = filteredData.filter(
-            (item) => item.transaction_type.name.toLowerCase() === "inbound"
-          );
-          break;
-        case 3: // Outgoing
-          filteredData = filteredData.filter(
-            (item) => item.transaction_type.name.toLowerCase() === "outbound"
-          );
-          break;
-        default:
-          break;
+  const renderItem = useCallback(({ item }) => (
+    <Pressable
+      onPress={() =>
+        router.push({
+          pathname: "transactionView",
+          params: { id: item.id },
+        })
       }
-    }
-
-    // Apply sorting (your existing sorting logic)
-    if (sortBy) {
-      switch (sortBy) {
-        case 1: //date asc
-          filteredData.sort((a, b) => b.created_at.localeCompare(a.created_at));
-          break;
-        case 2: //date asc
-          filteredData.sort((a, b) => a.created_at.localeCompare(b.created_at));
-          break;
-        case 3: //name asc
-          filteredData.sort((a, b) =>
-            a.product?.name?.localeCompare(b.product?.name)
-          );
-          break;
-        case 4: //name desc
-          filteredData.sort((a, b) =>
-            b.product?.name?.localeCompare(a.product?.name)
-          );
-          break;
-          break;
-        case 5: //store asc
-          filteredData.sort((a, b) =>
-            a.store?.name.localeCompare(b.store?.name)
-          );
-          break;
-        case 6: //store desc
-          filteredData.sort((a, b) =>
-            b.store?.name.localeCompare(a.store?.name)
-          );
-          break;
-        default:
-          break;
-      }
-    }
-
-    setSortedBy(filteredData);
-  }, [
-    historydata,
-    sortBy,
-    filter,
-    // searchText
-  ]); // Add searchText to the dependency array
-
-  // Function to reset all filters and sorting
-  const resetFilters = () => {
-    // setSearchText("");
-    setFilter("");
-    setSortBy("");
-  };
-
-  return (
-    <>
-      <View style={[{ backgroundColor: theme.pageBackground }, { flex: 1 }]}>
-        <FlatList
-          ListHeaderComponent={() => (
+    >
+      <View style={styles.main}>
+        <View
+          style={[
+            styles.card,
+            {
+              borderLeftColor:
+                item.transaction_type?.name === "Inbound"
+                  ? "#4F7900"
+                  : "#C90076",
+            },
+            { backgroundColor: theme.card.backgroundColor },
+          ]}
+        >
+          <View style={styles.card2}>
             <View>
-              <View>
-                <TextInput
-                  outlineColor="#c4d0e3"
-                  activeOutlineColor="#fff"
-                  style={{
-                    margin: 15,
-                    marginBottom: 5,
-                    backgroundColor: theme.search.backgroundColor,
-                  }}
-                  mode="outlined"
-                  placeholder="Search Transactions History"
-                  placeholderTextColor={theme.search.placeholderColor}
-                  textColor={theme.search.color} //color kapag nagtype
-                  left={
-                    <TextInput.Icon
-                      icon={() => (
-                        <Icon
-                          name="search"
-                          size={20}
-                          color={theme.search.iconPlaceholderColor}
-                        />
-                      )}
-                    />
-                  }
-                  theme={{ roundness: 10 }}
-                />
-              </View>
+              <Text style={{ fontSize: 10, color: "#666" }}>
+                {new Date(item.created_at).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}{" "}
+                -{" "}
+                {new Date(item.created_at).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flex: 1,
+              }}
+            >
               <View
                 style={{
-                  flex: 1,
                   flexDirection: "row",
-                  justifyContent: "space-between",
-                  gap: 0,
-                  marginHorizontal: 5,
+                  alignItems: "center",
+                  gap: 10,
                 }}
               >
-                <View style={{ width: "50%", marginBottom: 20 }}>
-                  <Dropdown
-                    style={[
-                      styles.dropdown,
-                      { backgroundColor: theme.dropdown.backgroundColor },
-                    ]}
-                    data={forFilter}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Filter"
-                    placeholderStyle={{
-                      color: theme.color,
-                    }}
-                    selectedTextStyle={{ color: theme.dropdown.color }}
-                    value={filter}
-                    onChange={(item) => setFilter(item.value)}
-                    renderItem={renderDropdown}
-                  />
-                </View>
-                <View style={{ width: "50%" }}>
-                  <Dropdown
-                    style={[
-                      styles.dropdown,
-                      { backgroundColor: theme.dropdown.backgroundColor },
-                    ]}
-                    data={forSortBy}
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Sort By"
-                    placeholderStyle={{
-                      color: theme.color,
-                    }}
-                    selectedTextStyle={{ color: theme.dropdown.color }}
-                    value={sortBy}
-                    onChange={(item) => setSortBy(item.value)}
-                    renderItem={renderDropdown}
-                  />
-                </View>
-              </View>
-            </View>
-          )}
-          data={sortedBy}
-          refreshControl={
-            <RefreshControl refreshing={refresh} onRefresh={refreshData} />
-          }
-          //wala akong dinark mode beyond this part bcs walang example item
-
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "transactionView",
-                  params: { id: item.id },
-                })
-              }
-            >
-              <View style={styles.main}>
-                <View
+                <Text
                   style={[
-                    styles.card,
+                    styles.text,
                     {
-                      borderLeftColor:
+                      color:
                         item.transaction_type?.name === "Inbound"
                           ? "#4F7900"
                           : "#C90076",
                     },
-                    { backgroundColor: theme.card.backgroundColor },
                   ]}
                 >
-                  <View style={styles.card2}>
-                    <View>
-                      {/* <Text style={{ fontSize: 10, color: "#666" }}>
-                        date and time
-                      </Text> */}
-                      <Text style={{ fontSize: 10, color: "#666" }}>
-                        {new Date(item.created_at).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}{" "}
-                        -{" "}
-                        {new Date(item.created_at).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        flex: 1,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 10,
-                        }}
-                      >
-                        <Text
-                          style={[
-                            styles.text,
-                            {
-                              color:
-                                item.transaction_type?.name === "Inbound"
-                                  ? "#4F7900"
-                                  : "#C90076",
-                            },
-                          ]}
-                        >
-                          {item.transaction_type?.name}
-                        </Text>
-                        {/* <Text style={styles.type1}>-</Text> */}
-                        {/* <Text style={styles.type1}>{item.products?.map((product)=>product.name).join(", ")}</Text> */}
-                      </View>
-                      {/* <View>
-                        <Text style={styles.type1}>₱ {item.total_price}</Text>
-                      </View> */}
-                      <View style={{ flexDirection: "column", gap: 10 }}>
-                        {item.products?.map((product) => (
-                          <View key={product.id}>
-                            <Text style={styles.type1}>
-                              Product Name: {product.name}
-                            </Text>
-                            {product.pivot && (
-                              <View style={{ marginBottom: 5 }}>
-                                <Text style={styles.type1}>
-                                  Qty: {Math.floor(product.pivot.quantity)}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                        ))}
-                      </View>
-
-                      <View style={{ flexDirection: "column", gap: 10 }}>
-                        <Text style={styles.type1}>para sa total price</Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
+                  {item.transaction_type?.name}
+                </Text>
               </View>
-            </Pressable>
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No transactions found</Text>
+              <View style={{ flexDirection: "row", gap: 10, alignItems: "center"}}>
+                <Text style={styles.type1}>
+                  {item.transaction_type?.name === "Inbound" ? "+" : "-"}
+                </Text>
+                <Text style={styles.type1}>
+                  ₱ {item.total_transaction_price || "0.00"}
+                </Text>
+              </View>
             </View>
-          )}
-          // ListFooterComponent={() => ()}
-        />
+          </View>
+        </View>
       </View>
-    </>
+    </Pressable>
+  ), [theme]);
+
+  const ListHeaderComponent = useMemo(() => (
+    <View>
+      <View>
+        {SearchInput}
+      </View>
+      <View
+        style={{
+          flex: 1,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          gap: 0,
+          marginHorizontal: 5,
+        }}
+      >
+        <View style={{ width: "50%", marginBottom: 20 }}>
+          <Dropdown
+            style={[
+              styles.dropdown,
+              { backgroundColor: theme.dropdown.backgroundColor },
+            ]}
+            data={forFilter}
+            labelField="label"
+            valueField="value"
+            placeholder="Filter"
+            placeholderStyle={{
+              color: theme.dropdown.placeholderColor || theme.color,
+            }}
+            selectedTextStyle={{ color: theme.dropdown.color }}
+            value={filter}
+            onChange={(item) => setFilter(item.value)}
+            renderItem={renderDropdown}
+          />
+        </View>
+        <View style={{ width: "50%" }}>
+          <Dropdown
+            style={[
+              styles.dropdown,
+              { backgroundColor: theme.dropdown.backgroundColor },
+            ]}
+            data={forSortBy}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Sort By"
+            placeholderStyle={{
+              color: theme.dropdown.placeholderColor || theme.color,
+            }}
+            selectedTextStyle={{ color: theme.dropdown.color }}
+            value={sortBy}
+            onChange={(item) => setSortBy(item.value)}
+            renderItem={renderDropdown}
+          />
+        </View>
+      </View>
+    </View>
+  ), [SearchInput, filter, sortBy, theme, renderDropdown]);
+
+  const ListEmptyComponent = useMemo(() => (
+    <View style={styles.emptyContainer}>
+      <Icon name="search" size={50} color="#6B7280" style={{ marginBottom: 10 }} />
+      <Text style={[styles.emptyText, { color: theme.text?.secondary || "#666" }]}>
+        {searchText || filter || sortBy !== 1
+          ? "No transactions match your search criteria" 
+          : "No transactions found"}
+      </Text>
+      {(searchText || filter || sortBy !== 1) && (
+        <TouchableOpacity onPress={resetFilters} style={styles.clearFiltersButton}>
+          <Text style={styles.clearFiltersText}>Clear all filters</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  ), [searchText, filter, sortBy, resetFilters, theme]);
+
+  return (
+    <View style={[{ backgroundColor: theme.pageBackground }, { flex: 1 }]}>
+      <FlatList
+        ListHeaderComponent={ListHeaderComponent}
+        data={sortedBy}
+        refreshControl={
+          <RefreshControl refreshing={refresh} onRefresh={refreshData} />
+        }
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={ListEmptyComponent}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={true}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+      />
+    </View>
   );
 }
 
@@ -419,12 +455,10 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 18,
     fontWeight: "bold",
-    // marginBottom: 5,
   },
   type1: {
-    fontSize: 10,
+    fontSize: 15,
     color: "#666",
-    // marginBottom: 3,
   },
   dropdown: {
     height: 50,
@@ -439,11 +473,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 40,
+    minHeight: 300,
   },
   emptyText: {
     fontSize: 16,
     color: "#666",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  clearFiltersButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#6B7280",
+    borderRadius: 5,
+  },
+  clearFiltersText: {
+    color: "white",
+    fontSize: 14,
   },
   btn: {
     border: 3,
