@@ -12,7 +12,6 @@ import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
-// import { Barcode } from "expo-barcode-generator";
 import { getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
@@ -35,9 +34,6 @@ function ProductView() {
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-
-  // Improved data refreshing function with proper image handling
- // Improved data refreshing function with proper image handling
 const refreshData = useCallback(() => {
   if (token) {
     setIsLoading(true);
@@ -45,22 +41,14 @@ const refreshData = useCallback(() => {
       .then((res) => {
         if (res && res.data) {
           console.log("Product detail data received:", res.data);
-          
-          // Process the image URL similar to the inventory page
           let processedData = {...res.data};
-          
-          // Validate and ensure image URL is properly formatted
           if (processedData.image) {
             console.log(`Original image path: ${processedData.image}`);
-            
-            // Also handle relative paths (similar to inventory page)
             if (!processedData.image.startsWith('http')) {
               processedData.image = `${BASE_URL}/${processedData.image.replace(/^\//, '')}`;
               console.log(`Converted to absolute URL: ${processedData.image}`);
             }
           }
-          
-          // Log the final image URL for debugging
           if (processedData.image) {
             console.log(`Final image URL for ${processedData.name}: ${processedData.image}`);
           }
@@ -124,7 +112,6 @@ const refreshData = useCallback(() => {
 
   return (
     <>
-      {/* header functions */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -196,7 +183,6 @@ const refreshData = useCallback(() => {
           </View>
         </View>
       </View>
-      {/* body, per product info */}
       <ScrollView
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={{ flexGrow: 1, alignItems: "center" }}
@@ -223,15 +209,8 @@ const refreshData = useCallback(() => {
             style={{ width: "85%", height: 300, borderRadius: 8, margin: 10 }}
             onError={(e) => {
               console.log("Image failed to load:", e.nativeEvent.error);
-              // The Image component will automatically use the default source if the URI fails
             }}
           />
-          {/* For debugging purposes
-          {__DEV__ && productData.image && (
-            <Text style={{fontSize: 10, color: theme.text.secondary, textAlign: 'center', padding: 5}}>
-              Image URL: {productData.image}
-            </Text>
-          )} */}
         </View>
         <View
           style={{

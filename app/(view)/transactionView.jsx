@@ -25,20 +25,14 @@ function TransactionView() {
   const theme = useContext(themeContext);
 
   console.log("transaction data", transactionData);
-
-  // Parse the allTransactions parameter when component mounts
   useEffect(() => {
     if (allTransactions) {
       try {
         const parsedData = JSON.parse(allTransactions);
         setAllTransactionsData(parsedData);
-        
-        // Try to find the current transaction in the parsed data
         const currentTransaction = parsedData.find(
           (transaction) => transaction.id.toString() === id.toString()
         );
-        
-        // If found, set it directly and skip API call
         if (currentTransaction) {
           console.log("Found transaction in history data");
           setTransactionData(currentTransaction);
@@ -51,7 +45,6 @@ function TransactionView() {
   }, [allTransactions, id]);
 
   const refreshData = useCallback(() => {
-    // Skip API call if we already have the data from allTransactions
     if (transactionData && !isLoading) {
       return;
     }
@@ -88,24 +81,20 @@ function TransactionView() {
   }, [id, token, transactionData, isLoading]);
 
   useFocusEffect(refreshData);
-  
-  // Helper function to find a related transaction by type (previous or next)
+
   const findRelatedTransaction = (type) => {
     if (!allTransactionsData.length || !transactionData) return null;
     
-    // Sort transactions by date (newest first)
     const sortedTransactions = [...allTransactionsData].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
     
-    // Find current transaction index
     const currentIndex = sortedTransactions.findIndex(
       t => t.id.toString() === transactionData.id.toString()
     );
     
     if (currentIndex === -1) return null;
     
-    // Return previous or next transaction based on type
     if (type === 'previous' && currentIndex < sortedTransactions.length - 1) {
       return sortedTransactions[currentIndex + 1];
     } else if (type === 'next' && currentIndex > 0) {
@@ -115,7 +104,6 @@ function TransactionView() {
     return null;
   };
   
-  // Navigate to previous or next transaction
   const navigateToTransaction = (type) => {
     const transaction = findRelatedTransaction(type);
     if (transaction) {
@@ -123,7 +111,7 @@ function TransactionView() {
         pathname: "transactionView",
         params: { 
           id: transaction.id,
-          allTransactions: allTransactions // Pass the history data again
+          allTransactions: allTransactions
         },
       });
     } else {
@@ -135,7 +123,6 @@ function TransactionView() {
   
   return (
     <>
-      {/* Header */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -165,33 +152,8 @@ function TransactionView() {
             <Icon3 name="arrow-left" size={18} color={theme.color} />
             <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
           </TouchableOpacity>
-          
-          {/* Add navigation buttons if we have allTransactionsData
-          {allTransactionsData.length > 0 && (
-            <View style={{ flexDirection: "row" }}>
-              <TouchableOpacity
-                onPress={() => navigateToTransaction('previous')}
-                style={{
-                  padding: 8,
-                  marginRight: 10,
-                }}
-              >
-                <Icon3 name="chevron-left" size={18} color={findRelatedTransaction('previous') ? theme.color : "#aaa"} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigateToTransaction('next')}
-                style={{
-                  padding: 8,
-                }}
-              >
-                <Icon3 name="chevron-right" size={18} color={findRelatedTransaction('next') ? theme.color : "#aaa"} />
-              </TouchableOpacity>
-            </View>
-          )} */}
         </View>
       </View>
-
-      {/* Body */}
       <ScrollView
         style={{ backgroundColor: theme.pageBackground || theme.background }}
         contentContainerStyle={{ flexGrow: 1 }}
@@ -209,7 +171,6 @@ function TransactionView() {
           </View>
         ) : (
           <>
-            {/* Transaction Header */}
             <View style={styles.headerCard}>
               <View
                 style={{
@@ -243,8 +204,6 @@ function TransactionView() {
                 </Text>
               </View>
             </View>
-
-            {/* Transaction Details */}
             <View
               style={[
                 styles.detailsCard,
@@ -272,16 +231,6 @@ function TransactionView() {
                   ₱ {transactionData.total_transaction_price || "0.00"}
                 </Text>
               </View>
-
-              {/* <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.color }]}>
-                  Created By
-                </Text>
-                <Text style={[styles.detailValue, { color: theme.color }]}>
-                  {transactionData.user?.name || "Unknown User"}
-                </Text>
-              </View> */}
-
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.color }]}>
                   Date
@@ -291,8 +240,6 @@ function TransactionView() {
                 </Text>
               </View>
             </View>
-
-            {/* Product Details Section */}
             {transactionData.products &&
               transactionData.products.length > 0 && (
                 <View

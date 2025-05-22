@@ -87,8 +87,6 @@ export default function Index() {
   const graphWidth = 1200;
   const graphHeight = 300;
 
-  // console.log("Token:", token);
-
 
   return (
     <>
@@ -175,8 +173,6 @@ export default function Index() {
               </Text>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity onPress={()=>{console.log("Token:", token);
-}}><Text>token</Text></TouchableOpacity>
         </ScrollView>
       </ScrollView>
     </>

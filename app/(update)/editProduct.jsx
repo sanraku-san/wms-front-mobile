@@ -13,6 +13,7 @@ import { updateProduct, getProductById } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
+import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 
 const categories = [
   { label: "Food", value: 1 },
@@ -36,23 +37,21 @@ export default function EditProducts() {
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
 
-  // useEffect(() => {
-  //   getProductById(id).then((res) => {
-  //     setProductData(res.data);
-  //   });
-  // }, [id]);
-
   useEffect(() => {
     if (token) {
-      getProductById(id, token).then((res) => {
-        setProductData(res.data);
-      })
-      .catch(error => {
-        console.error("Error fetching product:", error);
-        Alert.alert("Error", "Failed to load product details");
-      });
+      getProductById(id, token)
+        .then((res) => {
+          setProductData(res.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching product:", error);
+          Alert.alert("Error", "Failed to load product details");
+        });
     } else {
-      Alert.alert("Authentication Required", "Please log in to view product details");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to view product details"
+      );
       router.replace("/");
     }
   }, [id, token]);
@@ -60,15 +59,18 @@ export default function EditProducts() {
   const handleUpdate = () => {
     console.log("Payload being sent:", productData);
     setIsLoading(true);
-  
+
     if (!token) {
       setIsLoading(false);
       console.warn("Authentication token not found");
-      Alert.alert("Authentication Required", "Please log in to update the product");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to update the product"
+      );
       router.replace("/");
       return;
     }
-  
+
     updateProduct(id, productData, token)
       .then(() => {
         Alert.alert("Product Updated Successfully");
@@ -83,88 +85,115 @@ export default function EditProducts() {
       });
   };
 
- 
   return (
-    <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
-      <View style={styles.main}>
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          NAME OF PRODUCT:
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#fff"
-          value={productData.name}
-          onChangeText={(text) =>
-            setProductData({ ...productData, name: text })
-          }
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          PRODUCT DESCRIPTION:
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Description"
-          placeholderTextColor="#fff"
-          value={productData.description}
-          onChangeText={(text) =>
-            setProductData({ ...productData, description: text })
-          }
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          PRODUCT PRICE:
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Price"
-          placeholderTextColor="#fff"
-          value={productData.price}
-          onChangeText={(text) =>
-            setProductData({ ...productData, price: text })
-          }
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          BARCODE:
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Barcode"
-          placeholderTextColor="#fff"
-          value={productData.barcode}
-          onChangeText={(text) =>
-            setProductData({ ...productData, barcode: text })
-          }
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          CATEGORY:
-        </Text>
-
-        <Dropdown
-          style={styles.input}
-          data={categories}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Category"
-          placeholderTextColor="#fff"
-          value={productData.category_id}
-          onChange={(item, itemValue) =>
-            setProductData({ ...productData, category_id: itemValue })
-          }
-        />
-      </View>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
-        onPress={handleUpdate}
+    <>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 30,
+        }}
       >
-        <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
-          UPDATE
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={() => router.push("inventory")}
+          style={{
+            padding: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <Icon3 name="arrow-left" size={18} color={theme.color} />
+          <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <View
+        style={[styles.container, { backgroundColor: theme.pageBackground }]}
+      >
+        <View style={styles.main}>
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            NAME OF PRODUCT:
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor="#fff"
+            value={productData.name}
+            onChangeText={(text) =>
+              setProductData({ ...productData, name: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            PRODUCT DESCRIPTION:
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Description"
+            placeholderTextColor="#fff"
+            value={productData.description}
+            onChangeText={(text) =>
+              setProductData({ ...productData, description: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            PRODUCT PRICE:
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Price"
+            placeholderTextColor="#fff"
+            value={productData.price}
+            onChangeText={(text) =>
+              setProductData({ ...productData, price: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            BARCODE:
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Barcode"
+            placeholderTextColor="#fff"
+            value={productData.barcode}
+            onChangeText={(text) =>
+              setProductData({ ...productData, barcode: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            CATEGORY:
+          </Text>
+
+          <Dropdown
+            style={styles.input}
+            data={categories}
+            labelField="label"
+            valueField="value"
+            placeholder="Select Category"
+            placeholderTextColor="#fff"
+            value={productData.category_id}
+            onChange={(item, itemValue) =>
+              setProductData({ ...productData, category_id: itemValue })
+            }
+          />
+        </View>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
+          onPress={handleUpdate}
+        >
+          <Text
+            style={[styles.buttonText, { color: theme.button.profileIcon }]}
+          >
+            UPDATE
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 }
 

@@ -13,7 +13,6 @@ import { getProducts, deleteProduct } from "../api/products";
 import { router } from "expo-router";
 import Icon2 from "react-native-vector-icons/Ionicons";
 import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
-// import { Barcode } from "expo-barcode-generator";
 import { getUserById } from "../api/accounts";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
@@ -34,8 +33,8 @@ function AccountView() {
   const theme = useContext(themeContext);
 
   const refreshData = useCallback(() => {
-      if (token) { // Ensure you have a token before making the API call
-        getUserById(id, token) // Pass the token here
+      if (token) {
+        getUserById(id, token)
           .then((res) => {
             if (res && res.data) {
               setUserData(res.data);
@@ -51,10 +50,9 @@ function AccountView() {
       } else {
         console.warn("Authentication token not found. Cannot fetch products.");
         Alert.alert("Authentication Required", "Please log in to view products.");
-        // Optionally, redirect the user to the login screen
         router.replace("/login");
       }
-    }, [id, token]); // Add token to the dependency array of useCallback
+    }, [id, token]);
   
     useFocusEffect(refreshData);
 
@@ -93,7 +91,6 @@ function AccountView() {
 
   return (
     <>
-      {/* header functions */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -151,11 +148,12 @@ function AccountView() {
           </View>
         </View>
       </View>
-      {/* body, per product info */}
       <ScrollView
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={{ flexGrow: 1, alignItems: "center" }}
       >
+
+        
         <View
           style={{
             alignItems: "center",
@@ -184,9 +182,7 @@ function AccountView() {
           >
             {userData.profile?.first_name} {userData.profile?.last_name}
           </Text>
-          {/* other info */}
           <View style={styles.infoView}>
-            {/* username */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon
@@ -205,7 +201,6 @@ function AccountView() {
                 </Text>
               </View>
             </View>
-            {/* email */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon
@@ -224,7 +219,6 @@ function AccountView() {
                 </Text>
               </View>
             </View>
-            {/* contact number */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon

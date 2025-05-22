@@ -42,17 +42,13 @@ function Stores() {
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-
-  // Add ref for TextInput to maintain focus
   const searchInputRef = useRef(null);
-
-  // Enhanced search function with debouncing
   const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
   
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchText(searchText);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchText]);
@@ -117,12 +113,8 @@ function Stores() {
   }, [token]);
 
   useFocusEffect(refreshData);
-
-  // Memoize filtered and sorted data to prevent unnecessary re-renders
   const sortedBy = useMemo(() => {
     let filteredData = [...storesdata];
-
-    // Apply search filtering first - enhanced search
     if (debouncedSearchText) {
       const searchLower = debouncedSearchText.toLowerCase().trim();
       filteredData = filteredData.filter((item) => {
@@ -130,56 +122,39 @@ function Stores() {
           item.name,
           item.address,
           item.contact_number,
-          // Add more fields if available
-          // item.description,
-          // item.email,
-          // item.id?.toString(),
-        ].filter(Boolean); // Remove null/undefined values
+        ].filter(Boolean);
 
         return searchableFields.some(field => 
           field.toLowerCase().includes(searchLower)
         );
       });
     }
-
-    // Apply category filtering (you can customize these filters based on your store categories)
     if (filter) {
       switch (filter) {
-        case 1: // All Stores
+        case 1:
           break;
-        case 2: // ewan (customize this based on your actual filter categories)
-          // filteredData = filteredData.filter((item) => 
-          //   item.category?.toLowerCase() === "ewan"
-          // );
+        case 2: 
           break;
-        case 3: // etu
-          // filteredData = filteredData.filter((item) => 
-          //   item.category?.toLowerCase() === "etu"
-          // );
+        case 3: 
           break;
-        case 4: // etri
-          // filteredData = filteredData.filter((item) => 
-          //   item.category?.toLowerCase() === "etri"
-          // );
+        case 4: 
           break;
         default:
           break;
       }
     }
-
-    // Apply sorting
     if (sortBy) {
       switch (sortBy) {
-        case 1: // name asc
+        case 1:
           filteredData.sort((a, b) => a.name.localeCompare(b.name));
           break;
-        case 2: // name desc
+        case 2:
           filteredData.sort((a, b) => b.name.localeCompare(a.name));
           break;
-        case 3: // address asc
+        case 3:
           filteredData.sort((a, b) => a.address.localeCompare(b.address));
           break;
-        case 4: // address desc
+        case 4:
           filteredData.sort((a, b) => b.address.localeCompare(a.address));
           break;
         default:
@@ -190,18 +165,14 @@ function Stores() {
     return filteredData;
   }, [storesdata, sortBy, filter, debouncedSearchText]);
 
-  // Function to reset all filters and sorting
   const resetFilters = useCallback(() => {
     setSearchText("");
     setFilter("");
     setSortBy("");
-    // Keep focus on search input after reset
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
   }, []);
-
-  // Memoize the search input to prevent re-renders
   const SearchInput = useMemo(() => (
     <TextInput
       ref={searchInputRef}

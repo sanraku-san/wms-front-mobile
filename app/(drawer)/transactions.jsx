@@ -41,22 +41,16 @@ export default function Transactions() {
   const [products, setProducts] = useState([]);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-  
-  // For dropdown state
   const [selectedTransactionType, setSelectedTransactionType] = useState(null);
   const [selectedStore, setSelectedStore] = useState(null);
-  
-  // Fetch stores and products when component mounts
   useFocusEffect(
     useCallback(() => {
       setFetchingData(true);
       
       const fetchStoresAndProducts = async () => {
         try {
-          // Fetch stores
           const storesResponse = await getStores(token);
           if (storesResponse && storesResponse.data) {
-            // Transform data for dropdown
             const storeOptions = storesResponse.data.map(store => ({
               label: store.name,
               value: store.id.toString()
@@ -64,10 +58,8 @@ export default function Transactions() {
             setStores(storeOptions);
           }
           
-          // Fetch products
           const productsResponse = await getProducts(token);
           if (productsResponse && productsResponse.data) {
-            // Transform data for dropdown
             const productOptions = productsResponse.data.map(product => ({
               label: `${product.name} (${product.barcode || 'No barcode'})`,
               value: product.id.toString()
@@ -93,13 +85,10 @@ export default function Transactions() {
   );
   
   const handleAdd = useCallback(() => { 
-    // Validate all fields are filled
     if (!transactionData.store_id || !transactionData.transaction_type_id) {
       Alert.alert("Error", "Please select a store and transaction type");
       return;
     }
-    
-    // Validate all product entries
     const invalidProducts = transactionData.products.some(
       product => !product.product_id || !product.quantity
     );
@@ -118,7 +107,6 @@ export default function Transactions() {
           setIsLoading(false);
           if (res) {
             Alert.alert("Success", "Transaction added successfully");
-            // Reset form
             setTransactionData({
               store_id: "",
               transaction_type_id: "",
@@ -147,7 +135,6 @@ export default function Transactions() {
     }
   }, [token, transactionData]);
 
-  // Add a new product field
   const addProductField = () => {
     setTransactionData({
       ...transactionData,
@@ -158,7 +145,6 @@ export default function Transactions() {
     });
   };
 
-  // Remove a product field
   const removeProductField = (index) => {
     if (transactionData.products.length > 1) {
       const updatedProducts = [...transactionData.products];
@@ -171,8 +157,7 @@ export default function Transactions() {
       Alert.alert("Cannot Remove", "At least one product is required");
     }
   };
-
-  // Handle product field changes
+  
   const updateProductField = (index, field, value) => {
     const updatedProducts = [...transactionData.products];
     updatedProducts[index] = { ...updatedProducts[index], [field]: value };

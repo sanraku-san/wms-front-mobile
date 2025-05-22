@@ -6,13 +6,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { createStore } from "../api/stores";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
+import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 
 export default function addStore() {
   const [storeData, setStoreData] = useState({
@@ -35,27 +36,27 @@ export default function addStore() {
       if (!storeData.contact_number.startsWith("09")) {
         Alert.alert("Error", "Please enter a valid Philippine mobile number");
         alert("Error", "Please enter a valid Philippine mobile number");
-        console.log("Please enter a valid Philippine mobile number / 09")
+        console.log("Please enter a valid Philippine mobile number / 09");
         return;
       }
     } else if (storeData.contact_number.length === 12) {
       if (!storeData.contact_number.startsWith("+63")) {
         Alert.alert("Error", "Please enter a valid Philippine mobile number");
         alert("Error", "Please enter a valid Philippine mobile number");
-        console.log("Please enter a valid Philippine mobile number / +63")
+        console.log("Please enter a valid Philippine mobile number / +63");
         return;
       }
     } else if (storeData.contact_number.length === 13) {
       if (!storeData.contact_number.startsWith("0063")) {
         Alert.alert("Error", "Please enter a valid Philippine mobile number");
         alert("Error", "Please enter a valid Philippine mobile number");
-        console.log("Please enter a valid Philippine mobile number / ")
+        console.log("Please enter a valid Philippine mobile number / ");
         return;
       }
     } else {
       Alert.alert("Error", "Please enter a valid Philippine mobile number");
       alert("Error", "Please enter a valid Philippine mobile number");
-      console.log("Please enter a valid Philippine mobile number")
+      console.log("Please enter a valid Philippine mobile number");
       return;
     }
 
@@ -68,7 +69,6 @@ export default function addStore() {
           setIsLoading(false);
           if (res) {
             Alert.alert("Success", "Transaction added successfully");
-            // clear form
             setStoreData({
               name: "",
               address: "",
@@ -84,14 +84,11 @@ export default function addStore() {
             error.message || "Something went wrong with creating the store"
           );
         });
-        router.push("/(drawer)/stores")
+      router.push("/(drawer)/stores");
     } else {
       setIsLoading(false);
       console.warn("Authentication token not found");
-      Alert.alert(
-        "Authentication Required",
-        "Please log in to create a store"
-      );
+      Alert.alert("Authentication Required", "Please log in to create a store");
       router.replace("/");
     }
   }, [token, storeData]);
@@ -101,57 +98,85 @@ export default function addStore() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
-      <View style={styles.main}>
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          NAME OF STORE:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#FFF"
-          value={storeData.name}
-          onChangeText={(text) => setStoreData({ ...storeData, name: text })}
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          ADDRESS:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Address"
-          placeholderTextColor="#FFF"
-          value={storeData.address}
-          onChangeText={(text) => setStoreData({ ...storeData, address: text })}
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          CONTACT NUMBER:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="09XXXXXXXXX or +63XXXXXXXXX"
-          placeholderTextColor="#FFF"
-          value={storeData.contact_number}
-          onChangeText={handlePhoneChange}
-          maxLength={13}
-          keyboardType="phone-pad"
-        />
-      </View>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
-        onPress={handleAdd}
-        disabled={isLoading}
+    <>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 30,
+        }}
       >
-        {isLoading ? (
-          <ActivityIndicator color={theme.button.profileIcon} />
-        ) : (
-          <Text
-            style={[styles.buttonText, { color: theme.button.profileIcon }]}
-          >
-            ADD
+        <TouchableOpacity
+          onPress={() => router.push("stores")}
+          style={{
+            padding: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <Icon3 name="arrow-left" size={18} color={theme.color} />
+          <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <View
+        style={[styles.container, { backgroundColor: theme.pageBackground }]}
+      >
+        <View style={styles.main}>
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            NAME OF STORE:
           </Text>
-        )}
-      </TouchableOpacity>
-    </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor="#FFF"
+            value={storeData.name}
+            onChangeText={(text) => setStoreData({ ...storeData, name: text })}
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            ADDRESS:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Address"
+            placeholderTextColor="#FFF"
+            value={storeData.address}
+            onChangeText={(text) =>
+              setStoreData({ ...storeData, address: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            CONTACT NUMBER:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="09XXXXXXXXX or +63XXXXXXXXX"
+            placeholderTextColor="#FFF"
+            value={storeData.contact_number}
+            onChangeText={handlePhoneChange}
+            maxLength={13}
+            keyboardType="phone-pad"
+          />
+        </View>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
+          onPress={handleAdd}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={theme.button.profileIcon} />
+          ) : (
+            <Text
+              style={[styles.buttonText, { color: theme.button.profileIcon }]}
+            >
+              ADD
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </>
   );
 }
 

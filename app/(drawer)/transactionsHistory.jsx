@@ -21,7 +21,6 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { TextInput } from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
 import { getTransactions, deleteTransaction } from "../api/transactions";
-import Icon2 from "react-native-vector-icons/Ionicons";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
@@ -49,17 +48,13 @@ function TransactionsHistory() {
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-
-  // Add ref for TextInput to maintain focus
   const searchInputRef = useRef(null);
-
-  // Enhanced search function with debouncing
   const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchText(searchText);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchText]);
@@ -97,12 +92,8 @@ function TransactionsHistory() {
   }, [token]);
 
   useFocusEffect(refreshData);
-
-  // Memoize filtered and sorted data to prevent unnecessary re-renders
   const sortedBy = useMemo(() => {
     let filteredData = [...historydata];
-
-    // Apply search filtering first - enhanced search
     if (debouncedSearchText) {
       const searchLower = debouncedSearchText.toLowerCase().trim();
       filteredData = filteredData.filter((item) => {
@@ -111,14 +102,12 @@ function TransactionsHistory() {
           item.store?.name,
           item.product?.name,
           item.total_transaction_price?.toString(),
-          // Add any other searchable fields like description, notes, etc.
           item.description,
           item.notes,
-          // Search through products array if it exists
           ...(item.products
             ? item.products.map((product) => product.name)
             : []),
-        ].filter(Boolean); // Remove null/undefined values
+        ].filter(Boolean);
 
         return searchableFields.some((field) =>
           field.toLowerCase().includes(searchLower)
@@ -126,17 +115,16 @@ function TransactionsHistory() {
       });
     }
 
-    // Apply filtering
     if (filter) {
       switch (filter) {
-        case 1: // All Transactions
+        case 1:
           break;
-        case 2: // Incoming
+        case 2:
           filteredData = filteredData.filter(
             (item) => item.transaction_type?.name?.toLowerCase() === "inbound"
           );
           break;
-        case 3: // Outgoing
+        case 3:
           filteredData = filteredData.filter(
             (item) => item.transaction_type?.name?.toLowerCase() === "outbound"
           );
@@ -146,35 +134,34 @@ function TransactionsHistory() {
       }
     }
 
-    // Apply sorting
     if (sortBy) {
       switch (sortBy) {
-        case 1: // date desc (new first)
+        case 1:
           filteredData.sort(
             (a, b) => new Date(b.created_at) - new Date(a.created_at)
           );
           break;
-        case 2: // date asc (old first)
+        case 2:
           filteredData.sort(
             (a, b) => new Date(a.created_at) - new Date(b.created_at)
           );
           break;
-        case 3: // name asc
+        case 3:
           filteredData.sort((a, b) =>
             (a.product?.name || "").localeCompare(b.product?.name || "")
           );
           break;
-        case 4: // name desc
+        case 4:
           filteredData.sort((a, b) =>
             (b.product?.name || "").localeCompare(a.product?.name || "")
           );
           break;
-        case 5: // store asc
+        case 5:
           filteredData.sort((a, b) =>
             (a.store?.name || "").localeCompare(b.store?.name || "")
           );
           break;
-        case 6: // store desc
+        case 6:
           filteredData.sort((a, b) =>
             (b.store?.name || "").localeCompare(a.store?.name || "")
           );
@@ -186,19 +173,14 @@ function TransactionsHistory() {
 
     return filteredData;
   }, [historydata, sortBy, filter, debouncedSearchText]);
-
-  // Function to reset all filters and sorting
   const resetFilters = useCallback(() => {
     setSearchText("");
     setFilter("");
-    setSortBy(1); // Reset to default sort
-    // Keep focus on search input after reset
+    setSortBy(1);
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
   }, []);
-
-  // Memoize the search input to prevent re-renders
   const SearchInput = useMemo(
     () => (
       <TextInput
@@ -272,19 +254,14 @@ function TransactionsHistory() {
     },
     [theme]
   );
-
-  // In your TransactionsHistory.js file
-// Only showing the relevant part to modify
-
 const renderItem = useCallback(({ item }) => (
   <Pressable
     onPress={() => {
-      // Pass both the ID and stringify the whole history data
       router.push({
         pathname: "transactionView",
         params: { 
           id: item.id,
-          allTransactions: JSON.stringify(historydata) // Pass the entire history data
+          allTransactions: JSON.stringify(historydata)
         },
       });
     }}
@@ -360,7 +337,7 @@ const renderItem = useCallback(({ item }) => (
       </View>
     </View>
   </Pressable>
-), [theme, historydata]); // Add historydata as a dependency
+), [theme, historydata]); 
   const ListHeaderComponent = useMemo(
     () => (
       <View>

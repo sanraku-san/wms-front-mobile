@@ -41,18 +41,14 @@ function Accounts() {
   const [searchText, setSearchText] = useState("");
   const [refresh, setRefresh] = useState(false);
   const theme = useContext(themeContext);
-  const { token } = useSelector(selectAuth);
-
-  // Add ref for TextInput to maintain focus
-  const searchInputRef = useRef(null);
-
-  // Enhanced search function with debouncing
+  const { token } = useSelector(selectAuth)
+  const searchInputRef = useRef(null)
   const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
   
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchText(searchText);
-    }, 300); // 300ms debounce
+    }, 300)
 
     return () => clearTimeout(timer);
   }, [searchText]);
@@ -113,12 +109,8 @@ function Accounts() {
   }, [token]);
 
   useFocusEffect(refreshData);
-
-  // Memoize filtered and sorted data to prevent unnecessary re-renders
   const sortedBy = useMemo(() => {
     let filteredData = [...userdata];
-
-    // Apply search filtering first - enhanced search
     if (debouncedSearchText) {
       const searchLower = debouncedSearchText.toLowerCase().trim();
       filteredData = filteredData.filter((item) => {
@@ -127,28 +119,23 @@ function Accounts() {
           item.profile?.last_name,
           item.username,
           item.email,
-          // Add more fields if available
-          // item.role,
-          // item.id?.toString(),
-        ].filter(Boolean); // Remove null/undefined values
+        ].filter(Boolean);
 
         return searchableFields.some(field => 
           field.toLowerCase().includes(searchLower)
         );
       });
     }
-
-    // Apply role filtering
     if (filter) {
       switch (filter) {
-        case 1: // All Accounts
+        case 1:
           break;
-        case 2: // Manager
+        case 2:
           filteredData = filteredData.filter((item) => 
             item.role?.toLowerCase() === "manager"
           );
           break;
-        case 3: // Staff
+        case 3:
           filteredData = filteredData.filter((item) => 
             item.role?.toLowerCase() === "staff"
           );
@@ -158,25 +145,24 @@ function Accounts() {
       }
     }
 
-    // Apply sorting
     if (sortBy) {
       switch (sortBy) {
-        case 1: // first name asc
+        case 1:
           filteredData.sort((a, b) => 
             (a.profile?.first_name || "").localeCompare(b.profile?.first_name || "")
           );
           break;
-        case 2: // first name desc
+        case 2:
           filteredData.sort((a, b) => 
             (b.profile?.first_name || "").localeCompare(a.profile?.first_name || "")
           );
           break;
-        case 3: // last name asc
+        case 3:
           filteredData.sort((a, b) => 
             (a.profile?.last_name || "").localeCompare(b.profile?.last_name || "")
           );
           break;
-        case 4: // last name desc
+        case 4:
           filteredData.sort((a, b) => 
             (b.profile?.last_name || "").localeCompare(a.profile?.last_name || "")
           );
@@ -192,19 +178,14 @@ function Accounts() {
   const pushToEdit = useCallback((id) => {
     router.push({ pathname: "/(update)/editAccount", params: { id } });
   }, []);
-
-  // Function to reset all filters and sorting
   const resetFilters = useCallback(() => {
     setSearchText("");
     setFilter("");
     setSortBy("");
-    // Keep focus on search input after reset
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
   }, []);
-
-  // Memoize the search input to prevent re-renders
   const SearchInput = useMemo(() => (
     <TextInput
       ref={searchInputRef}
@@ -294,6 +275,7 @@ function Accounts() {
               </Text>
               <Text style={[styles.type1, { color: theme.item.address }]}>
                 {item.username}
+                {item.roles[0]?.name}
               </Text>
               <Text style={[styles.type1, { color: theme.item.contact }]}>
                 {item.email}

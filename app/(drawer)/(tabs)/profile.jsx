@@ -35,16 +35,13 @@ export default function Profile() {
     try {
       const res = await logoutAPI(token);
       if (res.success) {
-        dispatch(logoutAction()); // Clear Redux state
-        router.back(); // Navigate to login screen
-        // Optionally, show a success message
+        dispatch(logoutAction());
+        router.back(); 
       } else {
         console.error("Logout failed:", res.message);
-        // Optionally, show an error message
       }
     } catch (error) {
       console.error("Error during logout:", error);
-      // Optionally, show an error message
     }
   };
 
@@ -74,18 +71,14 @@ export default function Profile() {
 
   useFocusEffect(refreshData);
 
-  // Get profile image source
   const getProfileImageSource = () => {
-    // Check if profile has an image property
     if (userProfile.profile?.image) {
-      // Handle URLs vs relative paths like the inventory component
       if (userProfile.profile.image.startsWith('http')) {
         return { uri: userProfile.profile.image };
       } else {
         return { uri: `${URL}/${userProfile.profile.image}` };
       }
     }
-    // Fall back to default image if no image is available
     return require("@/assets/images/profile.jpg");
   };
 
@@ -104,7 +97,6 @@ export default function Profile() {
             alignItems: "center",
           }}
         >
-          {/* image and name */}
           <View style={[styles.imgView, { backgroundColor: "#0e1111" }]}>
             <ImageBackground
               source={require("@/assets/images/warehouse.jpg")}
@@ -118,16 +110,9 @@ export default function Profile() {
                   height: 150,
                   borderRadius: 500,
                   margin: 10,
-                  // shadowColor: "#fff",
-                  // shadowOpacity: 1,
-                  // shadowOffset: { width: 0, height: 0 },
-                  // shadowRadius: 500,
-                  // elevation: 5,
                 }}
-                // Add error handling to fall back to default image if the URL fails to load
                 onError={(e) => {
                   console.log("Profile image failed to load:", e.nativeEvent.error);
-                  // The Image component will automatically try the default source if the URI fails
                 }}
               />
               <Text
@@ -143,10 +128,7 @@ export default function Profile() {
               </Text>
             </ImageBackground>
           </View>
-
-          {/* other info */}
           <View style={styles.infoView}>
-            {/* username */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon
@@ -165,7 +147,6 @@ export default function Profile() {
                 </Text>
               </View>
             </View>
-            {/* email */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon
@@ -184,7 +165,6 @@ export default function Profile() {
                 </Text>
               </View>
             </View>
-            {/* contact number */}
             <View style={styles.perInfoView}>
               <View style={styles.InfoIconView}>
                 <Icon
@@ -205,7 +185,6 @@ export default function Profile() {
             </View>
           </View>
         </View>
-        {/* logout */}
         <View
           style={{
             alignContent: "center",
@@ -217,7 +196,6 @@ export default function Profile() {
           <TouchableOpacity
             onPress={handleLogout}
             style={{
-              // flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
               gap: 10,

@@ -12,6 +12,7 @@ import { getStoresById, updateStore } from "../api/stores";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
+import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 
 export default function editStore() {
   const router = useRouter();
@@ -24,40 +25,39 @@ export default function editStore() {
   const [isLoading, setIsLoading] = useState(false);
   const theme = useContext(themeContext);
   const { token } = useSelector(selectAuth);
-
-  // useEffect(() => {
-  //   getStoresById(id).then((res) => {
-  //     setStoreData(res.data);
-  //   });
-  // }, [id]);
-
-
   useEffect(() => {
-      if (token) {
-        getStoresById(id, token).then((res) => {
+    if (token) {
+      getStoresById(id, token)
+        .then((res) => {
           setStoreData(res.data);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error fetching store:", error);
           Alert.alert("Error", "Failed to load store details");
         });
-      } else {
-        Alert.alert("Authentication Required", "Please log in to view store details");
-        router.replace("/");
-      }
-    }, [id, token]);
+    } else {
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to view store details"
+      );
+      router.replace("/");
+    }
+  }, [id, token]);
 
   const handleUpdate = () => {
     console.log("Payload being sent:", storeData);
     setIsLoading(true);
 
     if (!token) {
-          setIsLoading(false);
-          console.warn("Authentication token not found");
-          Alert.alert("Authentication Required", "Please log in to update the store");
-          router.replace("/");
-          return;
-        }
+      setIsLoading(false);
+      console.warn("Authentication token not found");
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to update the store"
+      );
+      router.replace("/");
+      return;
+    }
 
     updateStore(id, storeData, token)
       .then(() => {
@@ -74,47 +74,77 @@ export default function editStore() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.pageBackground }]}>
-      <View style={[styles.main]}>
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          NAME OF STORE:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          value={storeData.name}
-          onChangeText={(text) => setStoreData({ ...storeData, name: text })}
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          ADDRESS:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Address"
-          value={storeData.address}
-          onChangeText={(text) => setStoreData({ ...storeData, address: text })}
-        />
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          CONTACT NUMBER:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Contact Number"
-          value={storeData.contact_number}
-          onChangeText={(text) =>
-            setStoreData({ ...storeData, contact_number: text })
-          }
-        />
-      </View>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
-        onPress={handleUpdate}
+    <>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 30,
+        }}
       >
-        <Text style={[styles.buttonText, { color: theme.button.profileIcon }]}>
-          UPDATE
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={() => router.push("stores")}
+          style={{
+            padding: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <Icon3 name="arrow-left" size={18} color={theme.color} />
+          <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <View
+        style={[styles.container, { backgroundColor: theme.pageBackground }]}
+      >
+        <View style={[styles.main]}>
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            NAME OF STORE:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={storeData.name}
+            onChangeText={(text) => setStoreData({ ...storeData, name: text })}
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            ADDRESS:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Address"
+            value={storeData.address}
+            onChangeText={(text) =>
+              setStoreData({ ...storeData, address: text })
+            }
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            CONTACT NUMBER:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Contact Number"
+            value={storeData.contact_number}
+            onChangeText={(text) =>
+              setStoreData({ ...storeData, contact_number: text })
+            }
+          />
+        </View>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
+          onPress={handleUpdate}
+        >
+          <Text
+            style={[styles.buttonText, { color: theme.button.profileIcon }]}
+          >
+            UPDATE
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 }
 

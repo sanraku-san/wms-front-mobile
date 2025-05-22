@@ -51,7 +51,6 @@ function Inventory() {
   
 
   console.log("product data", productdata)
-  // Add ref for TextInput to maintain focus
   const searchInputRef = useRef(null);
 
   const handleDelete = useCallback((id) => {
@@ -107,22 +106,18 @@ function Inventory() {
 
   useFocusEffect(refreshData);
 
-  // Enhanced search function with debouncing (optional)
   const [debouncedSearchText, setDebouncedSearchText] = useState(searchText);
   
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchText(searchText);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchText]);
-
-  // Memoize filtered and sorted data to prevent unnecessary re-renders
   const sortedBy = useMemo(() => {
     let filteredData = [...productdata];
 
-    // Apply search filtering first - enhanced search
     if (debouncedSearchText) {
       const searchLower = debouncedSearchText.toLowerCase().trim();
       filteredData = filteredData.filter((item) => {
@@ -130,41 +125,39 @@ function Inventory() {
           item.name,
           item.barcode,
           item.category?.name,
-          item.price?.toString(), // Include price in search
-        ].filter(Boolean); // Remove null/undefined values
+          item.price?.toString(),
+        ].filter(Boolean);
 
         return searchableFields.some(field => 
           field.toLowerCase().includes(searchLower)
         );
       });
     }
-
-    // Apply category filtering
     if (filter) {
       switch (filter) {
-        case 1: // All Items
+        case 1:
           break;
-        case 2: // Food
+        case 2:
           filteredData = filteredData.filter(
             (item) => item.category?.name?.toLowerCase() === "food"
           );
           break;
-        case 3: // Clothing
+        case 3:
           filteredData = filteredData.filter(
             (item) => item.category?.name?.toLowerCase() === "clothing"
           );
           break;
-        case 4: // Electronics
+        case 4:
           filteredData = filteredData.filter(
             (item) => item.category?.name?.toLowerCase() === "electronics"
           );
           break;
-        case 5: // Furniture
+        case 5:
           filteredData = filteredData.filter(
             (item) => item.category?.name?.toLowerCase() === "furniture"
           );
           break;
-        case 6: // Toys
+        case 6:
           filteredData = filteredData.filter(
             (item) => item.category?.name?.toLowerCase() === "toys"
           );
@@ -173,23 +166,21 @@ function Inventory() {
           break;
       }
     }
-
-    // Apply sorting
     if (sortBy) {
       switch (sortBy) {
-        case 1: // name asc
+        case 1:
           filteredData.sort((a, b) => a.name.localeCompare(b.name));
           break;
-        case 2: // name desc
+        case 2:
           filteredData.sort((a, b) => b.name.localeCompare(a.name));
           break;
-        case 3: // price asc
+        case 3:
           filteredData.sort((a, b) => a.price - b.price);
           break;
-        case 4: // price desc
+        case 4:
           filteredData.sort((a, b) => b.price - a.price);
           break;
-        case 5: // item code
+        case 5:
           filteredData.sort((a, b) => a.barcode.localeCompare(b.barcode));
           break;
         default:
@@ -200,12 +191,10 @@ function Inventory() {
     return filteredData;
   }, [productdata, sortBy, filter, debouncedSearchText]);
 
-  // Function to reset all filters and sorting
   const resetFilters = useCallback(() => {
     setSearchText("");
     setFilter("");
     setSortBy("");
-    // Keep focus on search input after reset
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
@@ -219,7 +208,6 @@ function Inventory() {
     router.replace({ pathname: "/(update)/editProduct", params: { id } });
   }, []);
 
-  // Memoize the search input to prevent re-renders
   const SearchInput = useMemo(() => (
     <TextInput
       ref={searchInputRef}
@@ -266,7 +254,6 @@ function Inventory() {
       onChangeText={setSearchText}
       theme={{ roundness: 4 }}
       selectTextOnFocus={true}
-      blurOnSubmit={false}
       autoCorrect={false}
       autoCapitalize="none"
       keyboardType="default"
@@ -331,10 +318,8 @@ function Inventory() {
                 : require("../../assets/images/box.jpg")
               }
               style={styles.productImage}
-              // Add error handling to fall back to default image if the URL fails to load
               onError={(e) => {
                 console.log("Image failed to load:", e.nativeEvent.error);
-                // The Image component will automatically try the default source if the URI fails
               }}
             />
             </View>
@@ -389,19 +374,6 @@ function Inventory() {
     <View>
       <View>
         {SearchInput}
-        {/* {(searchText || filter || sortBy) && (
-          <TouchableOpacity
-            onPress={resetFilters}
-            style={styles.resetButton}
-          >
-            <Text style={styles.resetButtonText}>Reset Filters</Text>
-          </TouchableOpacity>
-        )}
-        {searchText && sortedBy.length > 0 && (
-          <Text style={[styles.searchResults, { color: theme.text.secondary }]}>
-            Found {sortedBy.length} result{sortedBy.length !== 1 ? 's' : ''}
-          </Text>
-        )} */}
       </View>
       <View
         style={{

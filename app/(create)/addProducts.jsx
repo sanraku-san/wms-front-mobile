@@ -18,6 +18,8 @@ import { createProduct } from "../api/products";
 import { themeContext } from "../theme/themeContext";
 import { selectAuth } from "@/redux/slice";
 import { useSelector } from "react-redux";
+import Icon2 from "react-native-vector-icons/Ionicons";
+import Icon3 from "react-native-vector-icons/MaterialCommunityIcons";
 
 const categories = [
   { label: "Food", value: 1 },
@@ -42,14 +44,15 @@ export default function AddProducts() {
   const { token } = useSelector(selectAuth);
 
   const pickImage = async () => {
-    // Request permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission Required", "Please grant camera roll permissions to upload images");
+      Alert.alert(
+        "Permission Required",
+        "Please grant camera roll permissions to upload images"
+      );
       return;
     }
 
-    // Launch image picker
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -74,39 +77,35 @@ export default function AddProducts() {
       Alert.alert("Error", "Please fill in all fields and select an image");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Create FormData for multipart/form-data request
       const formData = new FormData();
-      
-      // Add product data
-      Object.keys(productData).forEach(key => {
+
+      Object.keys(productData).forEach((key) => {
         formData.append(key, productData[key]);
       });
-      
-      // Add image
+
       const imageUri = selectedImage.uri;
-      const filename = imageUri.split('/').pop();
-      // Get file extension
+      const filename = imageUri.split("/").pop();
+
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
-      
-      formData.append('image', {
+      const type = match ? `image/${match[1]}` : "image/jpeg";
+
+      formData.append("image", {
         uri: imageUri,
         name: filename,
         type,
       });
-      
+
       if (token) {
         const res = await createProduct(token, formData);
-        
+
         setIsLoading(false);
-        
+
         if (res && !res.error) {
           Alert.alert("Success", "Product added successfully");
-          // clear form
           setProductData({
             name: "",
             description: "",
@@ -118,10 +117,7 @@ export default function AddProducts() {
           setSelectedImage(null);
           router.push("/(drawer)/inventory");
         } else {
-          Alert.alert(
-            "Error",
-            res.message || "Failed to add product"
-          );
+          Alert.alert("Error", res.message || "Failed to add product");
         }
       } else {
         setIsLoading(false);
@@ -142,134 +138,161 @@ export default function AddProducts() {
   }, [token, productData, selectedImage]);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.pageBackground }]}>
-      <View style={styles.main}>
-        <Text style={[styles.title, { color: theme.button.profileText }]}>
-          Add New Product
-        </Text>
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Product Name:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#FFF"
-          value={productData.name}
-          onChangeText={(text) =>
-            setProductData({ ...productData, name: text })
-          }
-        />
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Price:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Price"
-          placeholderTextColor="#FFF"
-          value={productData.price}
-          onChangeText={(text) =>
-            setProductData({ ...productData, price: text })
-          }
-          keyboardType="numeric"
-        />
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Barcode:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Barcode"
-          placeholderTextColor="#FFF"
-          value={productData.barcode}
-          onChangeText={(text) =>
-            setProductData({ ...productData, barcode: text })
-          }
-        />
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Category:
-        </Text>
-        <Dropdown
-          style={styles.input}
-          data={categories}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Category"
-          placeholderStyle={{ color: "#FFF" }}
-          selectedTextStyle={{ color: "#000" }}
-          value={productData.category_id}
-          onChange={(item) =>
-            setProductData({ ...productData, category_id: item.value })
-          }
-        />
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Stock Quantity:
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Stock Quantity"
-          placeholderTextColor="#FFF"
-          value={productData.stock}
-          onChangeText={(text) =>
-            setProductData({ ...productData, stock: text })
-          }
-          keyboardType="numeric"
-        />
-        
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Description:
-        </Text>
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Description"
-          placeholderTextColor="#FFF"
-          value={productData.description}
-          onChangeText={(text) =>
-            setProductData({ ...productData, description: text })
-          }
-          multiline={true}
-          numberOfLines={4}
-        />
-        
-        {/* Image Selection */}
-        <Text style={[styles.label, { color: theme.button.profileText }]}>
-          Product Image:
-        </Text>
-        <TouchableOpacity 
-          style={styles.imagePickerButton} 
-          onPress={pickImage}
-        >
-          <Text style={styles.imagePickerText}>
-            {selectedImage ? "Change Image" : "Select an Image"}
-          </Text>
-        </TouchableOpacity>
-        
-        {selectedImage && (
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
-          </View>
-        )}
-      </View>
-      
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
-        onPress={handleAdd}
-        disabled={isLoading}
+    <>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 30,
+        }}
       >
-        {isLoading ? (
-          <ActivityIndicator color={theme.button.profileIcon} />
-        ) : (
-          <Text
-            style={[styles.buttonText, { color: theme.button.profileIcon }]}
-          >
-            ADD PRODUCT
+        <TouchableOpacity
+          onPress={() => router.push("inventory")}
+          style={{
+            padding: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <Icon3 name="arrow-left" size={18} color={theme.color} />
+          <Text style={{ color: theme.color, fontSize: 16 }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.pageBackground }]}
+      >
+        <View style={styles.main}>
+          <Text style={[styles.title, { color: theme.button.profileText }]}>
+            Add New Product
           </Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Product Name:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor="#FFF"
+            value={productData.name}
+            onChangeText={(text) =>
+              setProductData({ ...productData, name: text })
+            }
+          />
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Price:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Price"
+            placeholderTextColor="#FFF"
+            value={productData.price}
+            onChangeText={(text) =>
+              setProductData({ ...productData, price: text })
+            }
+            keyboardType="numeric"
+          />
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Barcode:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Barcode"
+            placeholderTextColor="#FFF"
+            value={productData.barcode}
+            onChangeText={(text) =>
+              setProductData({ ...productData, barcode: text })
+            }
+          />
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Category:
+          </Text>
+          <Dropdown
+            style={styles.input}
+            data={categories}
+            labelField="label"
+            valueField="value"
+            placeholder="Select Category"
+            placeholderStyle={{ color: "#FFF" }}
+            selectedTextStyle={{ color: "#000" }}
+            value={productData.category_id}
+            onChange={(item) =>
+              setProductData({ ...productData, category_id: item.value })
+            }
+          />
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Stock Quantity:
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Stock Quantity"
+            placeholderTextColor="#FFF"
+            value={productData.stock}
+            onChangeText={(text) =>
+              setProductData({ ...productData, stock: text })
+            }
+            keyboardType="numeric"
+          />
+
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Description:
+          </Text>
+          <TextInput
+            style={[styles.input, styles.descriptionInput]}
+            placeholder="Description"
+            placeholderTextColor="#FFF"
+            value={productData.description}
+            onChangeText={(text) =>
+              setProductData({ ...productData, description: text })
+            }
+            multiline={true}
+            numberOfLines={4}
+          />
+          <Text style={[styles.label, { color: theme.button.profileText }]}>
+            Product Image:
+          </Text>
+          <TouchableOpacity
+            style={styles.imagePickerButton}
+            onPress={pickImage}
+          >
+            <Text style={styles.imagePickerText}>
+              {selectedImage ? "Change Image" : "Select an Image"}
+            </Text>
+          </TouchableOpacity>
+
+          {selectedImage && (
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={styles.imagePreview}
+              />
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#Cbd5e1" }]}
+          onPress={handleAdd}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={theme.button.profileIcon} />
+          ) : (
+            <Text
+              style={[styles.buttonText, { color: theme.button.profileIcon }]}
+            >
+              ADD PRODUCT
+            </Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </>
   );
 }
 
